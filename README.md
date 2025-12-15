@@ -15,7 +15,7 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 
 ### 🚀 Live Application
 
-**Try it now:** [https://medical-assistant-1-15wf.onrender.com](https://medical-assistant-1-15wf.onrender.com)
+**Try it now:** [https://medical-assistant-1-15wf.onrender.com](https://multi-agent-medical-rag-2.onrender.com/)
 
 *Note: First request may take 30-60 seconds as the server spins up (free tier)*
 
