@@ -1,46 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medical AI Assistant</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="app-container">
         <!-- Left Sidebar Navigation -->
         <div class="nav-sidebar">
             <div class="nav-item active" title="Chat">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
             </div>
-            <div class="nav-item" title="History">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                </svg>
-            </div>
-            <div class="nav-item" title="Settings">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 1v6m0 6v6M1 12h6m6 0h6"/>
-                </svg>
-            </div>
-            <div class="nav-item" title="Medical Resources">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                </svg>
-            </div>
-            <div class="nav-item" title="Appointments">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-            </div>
+            <!-- Removed unused icons: History, Settings, Resources, Appointments -->
         </div>
 
         <!-- Chat Sidebar -->
@@ -48,24 +25,26 @@
             <div class="sidebar-header">
                 <div class="workspace-selector">
                     <span class="workspace-text">Medical AI Assistant</span>
-                    <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 12 15 18 9"/>
+                    <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9" />
                     </svg>
                 </div>
             </div>
 
             <button class="new-chat-btn" onclick="newChat()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
                 <span>New Chat</span>
             </button>
 
             <div class="search-container">
-                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
                 </svg>
                 <input type="text" placeholder="Search chats..." class="search-input">
             </div>
@@ -83,23 +62,23 @@
             <div class="top-bar">
                 <div class="top-bar-left">
                     <button class="collapse-btn" onclick="toggleSidebar()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="3" y1="12" x2="21" y2="12"/>
-                            <line x1="3" y1="6" x2="21" y2="6"/>
-                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
                         </svg>
                     </button>
-                    <div class="model-selector">
-                        <span class="model-name">Medical AI</span>
-                        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"/>
-                        </svg>
+                    <div class="model-selector" style="cursor: default;">
+                        <span class="model-name">Medical Coordinator</span>
+                        <!-- Removed dropdown icon since there's no selection -->
                     </div>
                 </div>
                 <div class="top-bar-right">
                     <button class="icon-btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                         </svg>
                     </button>
                 </div>
@@ -109,8 +88,9 @@
             <div class="chat-area" id="chatArea">
                 <div class="welcome-screen">
                     <div class="welcome-icon">
-                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
                     </div>
                     <h1>Medical AI Assistant</h1>
@@ -140,33 +120,27 @@
             <!-- Input Area -->
             <div class="input-section">
                 <div class="input-wrapper">
-                    <button class="attachment-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="16"/>
-                            <line x1="8" y1="12" x2="16" y2="12"/>
-                        </svg>
-                    </button>
-                    <textarea
-                        class="message-input"
-                        id="messageInput"
-                        placeholder="Send a message..."
-                        rows="1"
-                        onkeydown="handleKeyPress(event)"
-                    ></textarea>
+                    <!-- Removed attachment button -->
+                    <textarea class="message-input" id="messageInput" placeholder="Send a message..." rows="1"
+                        onkeydown="handleKeyPress(event)"></textarea>
                     <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13"/>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
                         </svg>
                     </button>
                 </div>
                 <div class="input-footer">
-                    <span class="disclaimer-text">⚠️ For informational purposes only. Consult healthcare professionals for medical advice.</span>
+                    <span class="disclaimer-text">⚠️ For informational purposes only. Consult healthcare professionals
+                        for medical advice.</span>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Add Marked.js for better formatting -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <script>
         let currentChatId = null;
@@ -209,7 +183,7 @@
             chatArea.innerHTML = '';
         }
 
-        function addMessage(text, isUser) {
+        function addMessage(text, isUser, toolUsed = null) {
             const chatArea = document.getElementById('chatArea');
 
             const welcomeScreen = chatArea.querySelector('.welcome-screen');
@@ -220,48 +194,59 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
 
+            // Tool Badge for Bot
+            let toolBadge = '';
+            if (!isUser && toolUsed && toolUsed !== 'unknown') {
+                const toolNames = {
+                    'rag': '📚 Knowledge Base',
+                    'research': '🔬 Research Papers',
+                    'websearch': '🌐 Web Search',
+                    'multi': '✨ Multi-Source',
+                    'safety': '🛡️ Safety'
+                };
+                const toolName = toolNames[toolUsed] || toolUsed;
+                toolBadge = `<div class="tool-badge">${toolName}</div>`;
+            }
+
             messageDiv.innerHTML = `
                 <div class="message-avatar">
                     ${isUser ?
-                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>' :
-                        '<div class="bot-icon">UI</div>'
-                    }
+                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>' :
+                    '<div class="bot-icon">UI</div>'
+                }
                 </div>
-                <div class="message-content">${formatMessage(text)}</div>
+                <div class="message-content">
+                    ${toolBadge}
+                    <div class="markdown-body">${formatMessage(text)}</div>
+                </div>
             `;
 
             chatArea.appendChild(messageDiv);
             chatArea.scrollTop = chatArea.scrollHeight;
-            saveMessageToChat(text, isUser);
+
+            // Only save if it's a new message (not loading history)
+            // But here we are just adding to UI. Saving happens in sendMessage loop or manually.
+            // The logic was slightly mixed before. Let's keep it simple.
         }
 
         function formatMessage(text) {
-            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            text = text.replace(/\n\n/g, '</p><p>');
-            text = text.replace(/\n/g, '<br>');
-            return '<p>' + text + '</p>';
+            // Use marked.js if available, otherwise fallback
+            if (typeof marked !== 'undefined') {
+                return marked.parse(text);
+            }
+            return text.replace(/\n/g, '<br>');
         }
 
         function showTypingIndicator() {
             const chatArea = document.getElementById('chatArea');
-
             const typingDiv = document.createElement('div');
             typingDiv.className = 'message bot-message';
             typingDiv.id = 'typingIndicator';
-
             typingDiv.innerHTML = `
-                <div class="message-avatar">
-                    <div class="bot-icon">UI</div>
-                </div>
+                <div class="message-avatar"><div class="bot-icon">UI</div></div>
                 <div class="message-content">
-                    <div class="typing-indicator">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-            `;
-
+                    <div class="typing-indicator"><span></span><span></span><span></span></div>
+                </div>`;
             chatArea.appendChild(typingDiv);
             chatArea.scrollTop = chatArea.scrollHeight;
         }
@@ -277,6 +262,7 @@
 
             if (!message || isTyping) return;
 
+            // 1. Show User Message
             addMessage(message, true);
             input.value = '';
             input.style.height = 'auto';
@@ -284,10 +270,10 @@
             isTyping = true;
             document.getElementById('sendBtn').disabled = true;
             input.disabled = true;
-
             showTypingIndicator();
 
             try {
+                // 2. Send to Backend
                 const response = await fetch(`${API_URL}/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -299,12 +285,17 @@
 
                 const data = await response.json();
                 removeTypingIndicator();
-                addMessage(data.answer || 'Sorry, I encountered an error.', false);
+
+                // 3. Show Bot Response with Tool Info
+                addMessage(data.answer || 'Sorry, I encountered an error.', false, data.tool_used);
+
+                // Update history title if needed
+                updateChatList();
 
             } catch (error) {
                 console.error('Error:', error);
                 removeTypingIndicator();
-                addMessage('⚠️ Could not connect to server. Please check the backend is running.', false);
+                addMessage('⚠️ Could not connect to server.', false);
             } finally {
                 isTyping = false;
                 document.getElementById('sendBtn').disabled = false;
@@ -330,18 +321,9 @@
                 await fetch(`${API_URL}/chats`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: currentChatId,
-                        title: 'New Chat'
-                    })
+                    body: JSON.stringify({ chat_id: currentChatId, title: 'New Chat' })
                 });
-            } catch (error) {
-                console.error('Error saving chat:', error);
-            }
-        }
-
-        function saveMessageToChat() {
-            updateChatList();
+            } catch (error) { console.error('Error saving chat:', error); }
         }
 
         async function loadChatHistory() {
@@ -350,7 +332,6 @@
 
         async function updateChatList() {
             const chatList = document.getElementById('chatList');
-
             try {
                 const response = await fetch(`${API_URL}/chats`);
                 const data = await response.json();
@@ -365,24 +346,33 @@
                 chats.forEach(chat => {
                     const item = document.createElement('div');
                     item.className = `chat-item ${chat.id === currentChatId ? 'active' : ''}`;
-                    item.onclick = () => loadChat(chat.id);
+                    // Important: prevent delete button click from triggering loadChat
+                    item.onclick = (e) => {
+                        if (!e.target.closest('.delete-chat-btn')) {
+                            loadChat(chat.id);
+                        }
+                    };
 
                     item.innerHTML = `
-                        <div class="chat-item-title">${chat.title}</div>
-                        <div class="chat-item-time">${formatTime(chat.updated_at || chat.created_at)}</div>
+                        <div class="chat-item-content">
+                            <div class="chat-item-title">${chat.title}</div>
+                            <div class="chat-item-time">${formatTime(chat.updated_at || chat.created_at)}</div>
+                        </div>
+                        <button class="delete-chat-btn" onclick="deleteChat('${chat.id}')" title="Delete Chat">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
                     `;
-
                     chatList.appendChild(item);
                 });
 
-            } catch (error) {
-                console.error('Error loading chats:', error);
-            }
+            } catch (error) { console.error('Error loading chats:', error); }
         }
 
         async function loadChat(chatId) {
             currentChatId = chatId;
-
             try {
                 const response = await fetch(`${API_URL}/chats/${chatId}`);
                 const data = await response.json();
@@ -390,35 +380,26 @@
                 if (data.chat && data.messages) {
                     clearChatDisplay();
                     data.messages.forEach(msg => {
-                        addMessageWithoutSave(msg.message, msg.is_user);
+                        // Tool info isn't stored in basic DB schema currently, so we pass null on reload
+                        // (Future improvement: store tool_used in DB)
+                        addMessage(msg.message, msg.is_user);
                     });
                     updateChatList();
                 }
-            } catch (error) {
-                console.error('Error loading chat:', error);
-            }
+            } catch (error) { console.error('Error loading chat:', error); }
         }
 
-        function addMessageWithoutSave(text, isUser) {
-            const chatArea = document.getElementById('chatArea');
+        async function deleteChat(chatId) {
+            if (!confirm('Are you sure you want to delete this chat?')) return;
 
-            const welcomeScreen = chatArea.querySelector('.welcome-screen');
-            if (welcomeScreen) welcomeScreen.remove();
-
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-
-            messageDiv.innerHTML = `
-                <div class="message-avatar">
-                    ${isUser ?
-                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>' :
-                        '<div class="bot-icon">UI</div>'
-                    }
-                </div>
-                <div class="message-content">${formatMessage(text)}</div>
-            `;
-
-            chatArea.appendChild(messageDiv);
+            try {
+                await fetch(`${API_URL}/chats/${chatId}`, { method: 'DELETE' });
+                if (currentChatId === chatId) {
+                    newChat();
+                } else {
+                    updateChatList();
+                }
+            } catch (error) { console.error('Error deleting chat:', error); }
         }
 
         function formatTime(timestamp) {
@@ -426,23 +407,21 @@
             const now = new Date();
             const diffMs = now - date;
             const diffMins = Math.floor(diffMs / 60000);
-
             if (diffMins < 1) return 'Just now';
             if (diffMins < 60) return `${diffMins}m ago`;
-
             const diffHours = Math.floor(diffMins / 60);
             if (diffHours < 24) return `${diffHours}h ago`;
-
             return date.toLocaleDateString();
         }
 
         function setupAutoResize() {
             const input = document.getElementById('messageInput');
-            input.addEventListener('input', function() {
+            input.addEventListener('input', function () {
                 this.style.height = 'auto';
                 this.style.height = Math.min(this.scrollHeight, 200) + 'px';
             });
         }
     </script>
 </body>
+
 </html>

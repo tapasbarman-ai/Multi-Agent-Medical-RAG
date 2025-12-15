@@ -35,10 +35,36 @@ def build_faiss_index():
     print(f"✅ Index saved at: {FAISS_DB_PATH}")
 
 
+# Global cache for FAISS index
+_faiss_cache = None
+
+def get_faiss_index():
+    """Get or load FAISS index with caching to prevent disk I/O on every request."""
+    global _faiss_cache
+    if _faiss_cache is not None:
+        return _faiss_cache
+        
+    print("📥 Loading FAISS index from disk (first time only)...")
+    embeddings = get_embedder()
+    if os.path.exists(FAISS_DB_PATH):
+        try:
+            _faiss_cache = FAISS.load_local(FAISS_DB_PATH, embeddings, allow_dangerous_deserialization=True)
+            print("✅ FAISS index loaded into memory")
+        except Exception as e:
+            print(f"❌ Error loading FAISS index: {e}")
+            return None
+    else:
+        print("⚠️ FAISS index not found. Please build it first.")
+        return None
+        
+    return _faiss_cache
+
 def retrieve_semantic_results(query: str, k: int = 3):
     """Retrieve semantically similar medical entries from FAISS."""
-    embeddings = get_embedder()
-    db = FAISS.load_local(FAISS_DB_PATH, embeddings, allow_dangerous_deserialization=True)
+    db = get_faiss_index()
+    if not db:
+        return []
+        
     results = db.similarity_search(query, k=k)
     return [r.page_content for r in results]
 

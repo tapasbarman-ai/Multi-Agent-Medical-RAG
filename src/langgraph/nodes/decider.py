@@ -51,8 +51,14 @@ def decide_tool(state):
         " and ", " also ", " plus ", " as well as "
     ])
 
+    # PubMed indicators
+    has_pubmed = any(word in query for word in [
+        "pubmed", "ncbi", "medline", "nih"
+    ])
+
     print(f"   Personal: {has_personal}")
     print(f"   Research: {has_research}")
+    print(f"   PubMed: {has_pubmed}")
     print(f"   News: {has_news}")
     print(f"   Medical Info: {has_medical_info}")
     print(f"   Conjunction: {has_conjunction}")
@@ -68,29 +74,31 @@ def decide_tool(state):
         state["tool"] = "multi"
         state["metadata"] = {
             "multi_tool": True,
-            "tools": ["rag", "research"],
+            "tools": ["rag", "research", "pubmed"],
             "queries": {
                 "rag": original_query,
-                "research": f"{medical_topic} research"
+                "research": f"{medical_topic} research",
+                "pubmed": f"{medical_topic} research"
             }
         }
-        print(f"🔀 MULTI-TOOL: Personal + Research")
+        print(f"🔀 MULTI-TOOL: Personal + Research (Enhanced)")
         return state
 
-    # Pattern 2: Medical info + Research (YOUR CASE!)
+    # Pattern 2: Medical info + Research
     # "heart disease treatment options and latest studies"
     if has_medical_info and has_research and has_conjunction:
         medical_topic = extract_topic(original_query)
         state["tool"] = "multi"
         state["metadata"] = {
             "multi_tool": True,
-            "tools": ["rag", "research"],
+            "tools": ["rag", "research", "pubmed"],
             "queries": {
                 "rag": original_query,
-                "research": f"{medical_topic} research"
+                "research": f"{medical_topic} research",
+                "pubmed": f"{medical_topic} research"
             }
         }
-        print(f"🔀 MULTI-TOOL: Medical Info + Research")
+        print(f"🔀 MULTI-TOOL: Medical Info + Research (Enhanced)")
         return state
 
     # Pattern 3: Medical info + News
@@ -116,18 +124,25 @@ def decide_tool(state):
         state["tool"] = "multi"
         state["metadata"] = {
             "multi_tool": True,
-            "tools": ["research", "websearch"],
+            "tools": ["research", "pubmed", "websearch"],
             "queries": {
                 "research": f"{medical_topic} research",
+                "pubmed": f"{medical_topic} research",
                 "websearch": f"{medical_topic} latest news"
             }
         }
-        print(f"🔀 MULTI-TOOL: Research + News")
+        print(f"🔀 MULTI-TOOL: Research (Enhanced) + News")
         return state
 
     # ===========================================
     # SINGLE-TOOL ROUTING
     # ===========================================
+
+    # Explicit PubMed request
+    if has_pubmed:
+        state["tool"] = "pubmed"
+        print(f"🎯 SINGLE: PubMed")
+        return state
 
     # Personal symptoms (high priority)
     if has_personal:
@@ -135,10 +150,19 @@ def decide_tool(state):
         print(f"🎯 SINGLE: RAG (personal symptom)")
         return state
 
-    # Explicit research request
+    # Generic Research request -> Upgrade to BOTH Research + PubMed
     if has_research and not has_medical_info:
-        state["tool"] = "research"
-        print(f"🎯 SINGLE: Research")
+        medical_topic = extract_topic(original_query)
+        state["tool"] = "multi"
+        state["metadata"] = {
+            "multi_tool": True,
+            "tools": ["research", "pubmed"],
+            "queries": {
+                "research": f"{medical_topic} research",
+                "pubmed": f"{medical_topic} research"
+            }
+        }
+        print(f"🎯 UPGRADE: Generic Research -> Multi (EuropePMC + PubMed)")
         return state
 
     # News/updates

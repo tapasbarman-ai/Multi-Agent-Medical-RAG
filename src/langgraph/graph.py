@@ -5,8 +5,10 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, END
 from src.langgraph.nodes.decider import decide_tool
 from src.langgraph.nodes.aggregator import aggregate_response
+from src.langgraph.nodes.safety_checker import safety_checker
 from src.tools.rag.rag_agent import rag_agent
 from src.tools.research.research_agent import research_agent
+from src.tools.research.pubmed_tool import pubmed_agent
 from src.tools.websearch.websearch_tool import websearch_tool
 
 
@@ -63,6 +65,8 @@ def multi_executor(state):
                 result = rag_agent(temp_state)
             elif tool_name == "research":
                 result = research_agent(temp_state)
+            elif tool_name == "pubmed":
+                result = pubmed_agent(temp_state)
             elif tool_name == "websearch":
                 result = websearch_tool(temp_state)
             else:
@@ -111,9 +115,11 @@ def build_graph():
     graph.add_node("decider", decide_tool)
     graph.add_node("rag", rag_agent)
     graph.add_node("research", research_agent)
+    graph.add_node("pubmed", pubmed_agent)
     graph.add_node("websearch", websearch_tool)
     graph.add_node("multi_executor", multi_executor)
     graph.add_node("aggregator", aggregate_response)
+    graph.add_node("safety_checker", safety_checker)
 
     # Set entry point
     graph.set_entry_point("decider")
@@ -125,6 +131,7 @@ def build_graph():
         {
             "rag": "rag",
             "research": "research",
+            "pubmed": "pubmed",
             "websearch": "websearch",
             "multi_executor": "multi_executor"
         }
@@ -133,11 +140,15 @@ def build_graph():
     # All tool nodes go to aggregator
     graph.add_edge("rag", "aggregator")
     graph.add_edge("research", "aggregator")
+    graph.add_edge("pubmed", "aggregator")
     graph.add_edge("websearch", "aggregator")
     graph.add_edge("multi_executor", "aggregator")
 
-    # Aggregator goes to END
-    graph.add_edge("aggregator", END)
+    # Aggregator goes to Safety Checker
+    graph.add_edge("aggregator", "safety_checker")
+
+    # Safety Checker goes to END
+    graph.add_edge("safety_checker", END)
 
     # Compile and return
     compiled = graph.compile()

@@ -46,30 +46,29 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 ## 🌟 Features
 
 ### 🎯 Multi-Tool Intelligence
-- **RAG Agent**: Retrieves relevant medical information from a local knowledge base using FAISS vector search
-- **Research Agent**: Searches academic databases (Europe PMC) for peer-reviewed medical research papers
-- **Web Search Agent**: Fetches latest medical news and updates from the web using Tavily Search
-- **Multi-Tool Orchestration**: Automatically combines multiple tools for complex queries
+- **Synthesizer Agent**: "Final Medical Response Synthesizer" that merges results from all agents into a single, authoritative, structured medical response.
+- **RAG Agent**: Retrieves relevant medical information from a local knowledge base using FAISS vector search. Optimized with in-memory caching and smart fallback.
+- **PubMed Research Tool**: Directly queries the NCBI PubMed database for high-quality medical literature and clinical studies.
+- **Web Search Agent**: Fetches latest medical news and updates from the web using Tavily Search.
+- **Multi-Tool Orchestration**: Automatically combines multiple tools for complex queries (e.g., "Research + News").
 
 ### 🧠 Smart Query Routing
-- Intelligent intent detection that analyzes user queries
-- Automatic tool selection based on query patterns
-- Multi-intent query support (e.g., "diabetes symptoms AND latest research")
-- Personal health query prioritization
+- Intelligent intent detection that analyzes user queries.
+- Automatic tool selection based on query patterns.
+- Multi-intent query support (e.g., "diabetes symptoms AND latest research").
+- Personal health query prioritization.
 
 ### 💬 Chat Features
-- Persistent chat history with SQLite database
-- Multiple conversation sessions
-- Message threading and context preservation
-- Beautiful, responsive web interface
-- Markdown rendering for formatted responses
+- **Medical Blue Theme**: Professional, clean, and modern UI with dark mode support.
+- **Tool Badges**: Visual indicators showing which tool was used for the response (e.g., 📚 Knowledge Base, 🔬 Research Papers).
+- **Markdown Support**: Beautifully formatted responses with headers, bullet points, and bold text.
+- **Chat Management**: Persistent history with option to delete individual chats.
+- **Responsive Design**: Mobile-friendly interface with sidebar navigation.
 
 ### 🔒 Production Ready
-- Optimized for Render deployment
-- Health check endpoints
-- CORS configuration
-- Comprehensive error handling and logging
-- Rate limiting support
+- **Optimized Performance**: RAG caching and LLM fallback (70b -> 8b) for reliability.
+- **Safety Guardrail**: Ensures every medical response includes a standard disclaimer.
+- **Easy Deployment**: Startup script (`run_app.bat`) and Docker/Render support.
 
 ---
 
@@ -79,85 +78,68 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 - **LangGraph**: Multi-agent orchestration framework
 - **LangChain**: LLM integration and tool management
 - **Flask**: Web server and REST API
-- **FAISS**: Vector database for semantic search
-- **HuggingFace Embeddings**: Text embeddings generation
-- **Groq API**: Fast LLM inference (Llama 3.1)
+- **FAISS**: Vector database with in-memory caching
+- **Groq API**: High-performance LLM inference (Llama 3.1 70b & 8b)
 
 ### External APIs
-- **Europe PMC API**: Research paper database (`https://www.ebi.ac.uk/europepmc/webservices/rest/search`)
+- **PubMed (NCBI)**: Primary medical literature source
+- **Europe PMC API**: Secondary research paper database
 - **Tavily Search API**: Web search functionality
 
 ### Frontend
-- **HTML5/CSS3**: Modern, responsive UI
-- **JavaScript (Vanilla)**: Chat interface logic
-- **Markdown Rendering**: Formatted AI responses
-
-### Database
-- **SQLite**: Lightweight chat history storage
+- **HTML5/CSS3**: "Medical Blue" theme with Inter typography
+- **JavaScript**: Interactive chat logic with `marked.js`
+- **Markdown Rendering**: Enhanced readability
 
 ---
 
 ## 📋 Prerequisites
 
-- Python 3.10 or higher
+- Python 3.10+
 - API Keys:
-  - `GROQ_API_KEY` - For LLM inference ([Get it here](https://console.groq.com/))
-  - `HUGGINGFACE_API_KEY` - For embeddings ([Get it here](https://huggingface.co/settings/tokens))
-  - `TAVILY_API_KEY` - For web search ([Get it here](https://tavily.com/))
+  - `GROQ_API_KEY`
+  - `TAVILY_API_KEY`
+  - `HUGGINGFACE_API_KEY`
+  - `PUBMED_API_KEY` (Optional)
 
 ---
 
 ## 🚀 Installation
 
-### 1. Clone the Repository
+### Windows (Quick Start)
+Simply double-click **`run_app.bat`**. It handles everything: virtual env, dependencies, and startup.
 
-```bash
-git clone https://github.com/Tapas000/Multi-Agent-RAG-Medical-Assistant.git
-cd Multi-Agent-RAG-Medical-Assistant
-```
+### Manual Installation
 
-### 2. Create Virtual Environment
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/Tapas000/Multi-Agent-RAG-Medical-Assistant.git
+   cd Multi-Agent-RAG-Medical-Assistant
+   ```
 
-```bash
-python -m venv venv
+2. **Create Virtual Environment**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows: .venv\Scripts\activate
+   ```
 
-# On Windows
-venv\Scripts\activate
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-# On macOS/Linux
-source venv/bin/activate
-```
+4. **Set Up Environment Variables**
+   Create a `.env` file:
+   ```env
+   GROQ_API_KEY=gsk_...
+   TAVILY_API_KEY=tvly-...
+   HUGGINGFACE_API_KEY=hf_...
+   ```
 
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Set Up Environment Variables
-
-Create a `.env` file in the root directory:
-
-```bash
-# LLM and Embeddings
-GROQ_API_KEY=your_groq_api_key_here
-HUGGINGFACE_API_KEY=your_huggingface_api_key_here
-
-# Web Search
-TAVILY_API_KEY=your_tavily_api_key_here
-
-# Optional: Custom Configuration
-PORT=8000
-```
-
-### 5. Initialize FAISS Index
-
-Ensure your FAISS index is set up in `data/faiss_index/`:
-
-```bash
-# If you need to create the index from documents
-python src/tools/rag/embedder.py
-```
+5. **Run the Application**
+   ```bash
+   python web/app.py
+   ```
 
 ---
 
@@ -625,19 +607,19 @@ The developers and contributors assume no liability for any medical decisions ma
 
 ## 🗺️ Roadmap
 
-### Version 2.0 (Planned)
-- [ ] Integration with PubMed API
+### Version 2.0 (InProgress)
+- [x] Integration with PubMed API
+- [x] Unified Response Synthesizer
+- [x] UI Polish & Themes
 - [ ] Multi-language support
 - [ ] Voice input/output
 - [ ] Medical image analysis
-- [ ] Symptom checker with decision trees
-- [ ] Appointment booking integration
+
 
 ### Version 2.1 (Future)
 - [ ] Mobile app (React Native)
 - [ ] Real-time collaborative chats
 - [ ] Advanced analytics dashboard
-- [ ] Custom medical knowledge base upload
 - [ ] HIPAA compliance features
 
 ---
