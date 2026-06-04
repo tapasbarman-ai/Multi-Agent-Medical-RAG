@@ -59,14 +59,64 @@ def get_faiss_index():
         
     return _faiss_cache
 
+_cross_encoder_cache = None
+
+def get_cross_encoder():
+    """Lazily load and cache the CrossEncoder model for re-ranking."""
+    global _cross_encoder_cache
+    if _cross_encoder_cache is not None:
+        return _cross_encoder_cache
+        
+    print("📥 Loading CrossEncoder (first time only)...")
+    try:
+        from sentence_transformers import CrossEncoder
+        # Ms-Marco-MiniLM is lightweight (~80MB) and very accurate for passage ranking
+        _cross_encoder_cache = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+        print("✅ CrossEncoder loaded successfully")
+    except Exception as e:
+        print(f"⚠️ Error loading CrossEncoder: {e}. Falling back to standard FAISS retrieval.")
+        _cross_encoder_cache = None
+    return _cross_encoder_cache
+
 def retrieve_semantic_results(query: str, k: int = 3):
-    """Retrieve semantically similar medical entries from FAISS."""
+    """Retrieve semantically similar medical entries from FAISS with Cross-Encoder re-ranking."""
     db = get_faiss_index()
     if not db:
         return []
         
-    results = db.similarity_search(query, k=k)
-    return [r.page_content for r in results]
+    # Stage 1: Retrieve more candidate documents (e.g., 10 candidates)
+    # This ensures we have a broader pool for the more precise Cross-Encoder to evaluate
+    try:
+        candidates = db.similarity_search(query, k=max(k * 3, 10))
+    except Exception as e:
+        print(f"⚠️ FAISS similarity search error: {e}")
+        return []
+
+    if not candidates:
+        return []
+        
+    candidate_texts = [r.page_content for r in candidates]
+    
+    # Stage 2: Re-rank using Cross-Encoder
+    encoder = get_cross_encoder()
+    if encoder is not None:
+        try:
+            # Pair query with each candidate text
+            pairs = [[query, text] for text in candidate_texts]
+            scores = encoder.predict(pairs)
+            
+            # Sort by score descending
+            scored_candidates = sorted(zip(scores, candidate_texts), key=lambda x: x[0], reverse=True)
+            
+            # Select top k
+            top_results = [text for score, text in scored_candidates[:k]]
+            print(f"🔍 [Re-ranker] Re-ranked {len(candidate_texts)} candidates. Top score: {scored_candidates[0][0]:.4f}")
+            return top_results
+        except Exception as e:
+            print(f"⚠️ CrossEncoder scoring error: {e}. Falling back to default similarity order.")
+            
+    # Fallback to default FAISS order
+    return candidate_texts[:k]
 
 
 if __name__ == "__main__":
