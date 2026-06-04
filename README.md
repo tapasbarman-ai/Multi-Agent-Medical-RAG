@@ -1,6 +1,6 @@
 # 🏥 Medical AI Chatbot
 
-An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmented Generation), research paper databases, and web search to provide comprehensive answers to health-related queries.
+An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmented Generation), medical image analysis, research paper databases, and web search to provide comprehensive answers to health-related queries.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![LangGraph](https://img.shields.io/badge/LangGraph-enabled-green.svg)
@@ -19,25 +19,12 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 
 *Note: First request may take 30-60 seconds as the server spins up (free tier)*
 
----
-  
-### 📹 Watch the Chatbot in Action
-
-[![Medical AI Chatbot Demo](https://img.youtube.com/vi/LoehtNDVPvs/maxresdefault.jpg)](https://youtu.be/LoehtNDVPvs)
-
-**🎥 [Watch Full Demo on YouTube](https://youtu.be/LoehtNDVPvs)**
-
 **Quick Demo Highlights:**
 - 🎯 Intelligent query routing
 - 🔍 Multi-tool orchestration
 - 💬 Real-time chat interface
 - 📚 RAG-powered medical responses
-
-**Quick Demo Highlights:**
-- 🎯 Intelligent query routing
-- 🔍 Multi-tool orchestration
-- 💬 Real-time chat interface
-- 📚 RAG-powered medical responses
+- 🖼️ Medical image analysis
 
 </div>
 
@@ -46,27 +33,33 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 ## 🌟 Features
 
 ### 🎯 Multi-Tool Intelligence
-- **Synthesizer Agent**: "Final Medical Response Synthesizer" (upgraded to Llama 3.3 70b) that merges results from all agents into a single, authoritative, structured medical response.
-- **RAG Agent**: Retrieves relevant medical information from a local knowledge base using FAISS vector search, upgraded with BAAI embeddings and Cross-Encoder re-ranking.
-- **PubMed Research Tool**: Directly queries the NCBI PubMed database for high-quality medical literature and clinical studies.
+- **Synthesizer Agent**: "Final Medical Response Synthesizer" (Llama 3.3 70b Versatile) that merges results from all agents into a single, authoritative, structured medical response.
+- **RAG Agent**: Retrieves relevant medical information from a local knowledge base using FAISS vector search with Gemini embeddings and Cross-Encoder re-ranking.
+- **PubMed Research Tool**: Directly queries the NCBI PubMed database (E-utilities API) for high-quality medical literature and clinical studies.
+- **Europe PMC Research Tool**: Searches the Europe PMC database for academic research papers, clinical trials, and medical literature.
 - **Web Search Agent**: Fetches latest medical news and updates from the web using Tavily Search.
+- **Vision Agent**: Analyzes medical images (X-rays, MRIs, CT scans, skin lesions, lab reports) using Google Gemini 2.5 Flash with patient-context-aware clinical interpretation.
 - **Multi-Tool Orchestration**: Automatically combines multiple tools for complex queries (e.g., "Research + News").
 
 ### 🧠 Smart Query Routing & Context Memory
-- **LLM-Based Router**: Advanced query classifier and reference resolver using Llama-3.1-8b.
-- **Multi-turn Memory**: Conversational context retention across multiple dialogue turns.
-- **Patient Intake Questionnaire**: Gathers patient age, sex, chronic conditions, and allergies to personalize recommendations.
+- **LLM-Based Router**: Advanced query classifier and reference resolver using Llama 3.1 8b Instant, with automatic fallback to rule-based keyword matching.
+- **Multi-turn Memory**: Conversational context retention across multiple dialogue turns (last 5 messages).
+- **Patient Intake Questionnaire**: Gathers patient age, sex, chronic conditions, and allergies to personalize recommendations across all agents.
+- **Context-Aware Query Rewriting**: Resolves pronouns and references using conversation history for standalone, search-friendly queries.
 
 ### 💬 Chat Features
 - **Premium Glassmorphic UI**: High-fidelity dark navy clinical theme with frosted-glass components, hover transitions, and progress timelines.
 - **Real-Time Streaming**: Tokens stream character-by-character using Server-Sent Events (SSE) for low latency.
 - **Structured Citation Cards**: Dynamic visual blocks linking directly to PubMed, Europe PMC, or web source documents.
 - **Tool Badges**: Visual indicators showing which tool was used for the response.
+- **Medical Image Upload**: Drag-and-drop or click-to-upload image support for clinical vision analysis.
 
 ### 🔒 Clinical Safety & Production
-- **LLM Safety Audit**: final guardrail node validating clinical language, detecting emergency warning signs, and warning high-risk patients.
-- **Optimized Performance**: RAG caching, local Cross-Encoder re-ranking, and dual fallback inference routes.
-- **Easy Deployment**: Startup script (`run_app.bat`) and Render support.
+- **LLM Safety Audit**: Final guardrail node validating clinical language, detecting emergency warning signs (chest pain, breathing difficulty, suicidal thoughts), and flagging absolute diagnoses or dangerous dosages.
+- **Emergency Callouts**: Automatic EMERGENCY NOTICE prepended for life-threatening symptom queries.
+- **Optimized Performance**: FAISS index caching, Cross-Encoder model caching, and dual fallback inference routes (70b → 8b).
+- **Dual Database Support**: PostgreSQL (Supabase) for production with automatic SQLite fallback for local development.
+- **Easy Deployment**: Startup script (`run_app.bat`), Render, and Vercel support.
 
 ---
 
@@ -75,19 +68,25 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 ### Backend
 - **LangGraph**: Multi-agent orchestration framework
 - **LangChain**: LLM integration and tool management
-- **Flask**: Web server and REST API
+- **Flask**: Web server and REST API with SSE streaming
 - **FAISS**: Vector database with in-memory caching
-- **Groq API**: High-performance LLM inference (Llama 3.1 70b & 8b)
+- **Groq API**: High-performance LLM inference (Llama 3.3 70b Versatile & Llama 3.1 8b Instant)
+- **Gunicorn**: Production WSGI server
 
 ### External APIs
-- **PubMed (NCBI)**: Primary medical literature source
+- **Google Gemini API**: Medical image analysis (Gemini 2.5 Flash) and text embeddings (Gemini Embedding 001)
+- **PubMed (NCBI E-utilities)**: Primary medical literature source
 - **Europe PMC API**: Secondary research paper database
 - **Tavily Search API**: Web search functionality
 
 ### Frontend
-- **HTML5/CSS3**: "Medical Blue" theme with Inter typography
-- **JavaScript**: Interactive chat logic with `marked.js`
-- **Markdown Rendering**: Enhanced readability
+- **HTML5/CSS3**: Dark navy clinical theme with Inter typography
+- **JavaScript**: Interactive chat logic with `marked.js` (inlined in HTML)
+- **Markdown Rendering**: Enhanced readability with structured citation cards
+
+### Database
+- **PostgreSQL (Supabase)**: Production database with connection pooling
+- **SQLite**: Local development fallback (automatic detection)
 
 ---
 
@@ -95,10 +94,11 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 
 - Python 3.10+
 - API Keys:
-  - `GROQ_API_KEY`
-  - `TAVILY_API_KEY`
-  - `HUGGINGFACE_API_KEY`
-  - `PUBMED_API_KEY` (Optional)
+  - `GROQ_API_KEY` (Required — LLM inference)
+  - `TAVILY_API_KEY` (Required — web search)
+  - `GEMINI_API_KEY` (Required — image analysis & embeddings)
+  - `PUBMED_API_KEY` (Optional — higher PubMed rate limits)
+  - `DATABASE_URL` (Optional — PostgreSQL connection string for production)
 
 ---
 
@@ -131,10 +131,20 @@ Simply double-click **`run_app.bat`**. It handles everything: virtual env, depen
    ```env
    GROQ_API_KEY=gsk_...
    TAVILY_API_KEY=tvly-...
-   HUGGINGFACE_API_KEY=hf_...
+   GEMINI_API_KEY=your_gemini_api_key
+   PUBMED_API_KEY=your_pubmed_api_key        # Optional
+   DATABASE_URL=postgresql://...              # Optional (Supabase)
+   EMBED_MODEL=BAAI/bge-small-en-v1.5        # Legacy config key
+   DATASET_NAME=QuyenAnhDE/Diseases_Symptoms
+   FAISS_DB_PATH=data/faiss_index
    ```
 
-5. **Run the Application**
+5. **Build the FAISS Index** (first time only)
+   ```bash
+   python src/tools/rag/retriever.py
+   ```
+
+6. **Run the Application**
    ```bash
    python web/app.py
    ```
@@ -171,10 +181,22 @@ The server will start on `http://localhost:8000`
 "Latest research on Alzheimer's disease prevention"
 ```
 
+**PubMed Literature (NCBI)**
+```
+"Find PubMed studies on COVID-19 vaccine side effects"
+"Search NCBI for clinical trials on immunotherapy"
+```
+
 **Latest News (Tavily Search)**
 ```
 "What are the latest COVID-19 guidelines for 2025?"
 "Recent breakthroughs in cancer treatment"
+```
+
+**Medical Image Analysis (Vision)**
+```
+Upload an X-ray, MRI, CT scan, or skin photograph
+"Analyze this chest X-ray for abnormalities"
 ```
 
 ### Multi-Tool Queries
@@ -210,35 +232,48 @@ The server will start on `http://localhost:8000`
 ```
 medical-ai-chatbot/
 ├── data/
-│   └── faiss_index/          # Vector database
+│   └── faiss_index/              # Vector database
 │       ├── index.faiss
 │       └── index.pkl
 ├── src/
+│   ├── app.py                    # CLI entry point
 │   ├── config/
-│   │   └── settings.py       # Configuration settings
+│   │   └── settings.py           # Configuration settings
 │   ├── langgraph/
-│   │   ├── nodes/
-│   │   │   ├── decider.py    # Query routing logic
-│   │   │   └── aggregator.py # Response aggregation
-│   │   └── graph.py          # LangGraph workflow
+│   │   ├── graph.py              # LangGraph workflow definition
+│   │   └── nodes/
+│   │       ├── decider.py        # LLM-based query router
+│   │       ├── aggregator.py     # Response synthesizer (Llama 3.3 70b)
+│   │       └── safety_checker.py # Clinical safety guardrail
 │   └── tools/
-│       ├── rag/              # RAG agent (FAISS)
-│       ├── research/         # Research agent (Europe PMC)
-│       └── websearch/        # Web search agent (Tavily)
+│       ├── rag/
+│       │   ├── embedder.py       # Gemini Embedding API wrapper
+│       │   ├── retriever.py      # FAISS retrieval + Cross-Encoder re-ranking
+│       │   └── rag_agent.py      # RAG agent node
+│       ├── research/
+│       │   ├── research_agent.py # Europe PMC agent
+│       │   └── pubmed_tool.py    # PubMed (NCBI) agent
+│       ├── vision/
+│       │   └── vision_agent.py   # Medical image analyzer (Gemini 2.5 Flash)
+│       └── websearch/
+│           └── websearch_tool.py # Tavily web search agent
 ├── web/
-│   ├── static/
-│   │   ├── index.html        # Frontend UI
-│   │   ├── styles.css        # Styling
-│   │   └── script.js         # Chat logic
-│   ├── app.py                # Flask backend
-│   └── chat_history.db       # SQLite database
-├── demo/
-│   └── demo-video.mkv        # Demo video file
-├── .env                      # Environment variables
-├── .gitignore                # Git ignore rules
-├── requirements.txt          # Python dependencies
-├── render.yaml               # Render deployment config
-└── README.md                 # This file
+│   ├── app.py                    # Flask backend + SSE streaming
+│   ├── clear_db.py               # Database cleanup utility
+│   └── static/
+│       ├── index.html            # Frontend UI (HTML + inline JS)
+│       └── styles.css            # Styling
+├── .env                          # Environment variables
+├── .gitignore                    # Git ignore rules
+├── pyproject.toml                # Python project metadata
+├── requirements.txt              # Python dependencies
+├── runtime.txt                   # Python version for deployment
+├── render.yaml                   # Render deployment config
+├── vercel.json                   # Vercel deployment config
+├── run_app.bat                   # Windows quick-start script
+├── SETUP.md                      # Additional setup documentation
+└── README.md                     # This file
+```
 
 
 ## 🔧 Configuration
@@ -249,15 +284,14 @@ Edit `src/langgraph/nodes/aggregator.py`:
 
 ```python
 llm = ChatGroq(
-    model="llama-3.1-8b-instant",  # Change model here
-    temperature=0.3,                # Adjust creativity (0.0-1.0)
-    max_tokens=2048                 # Response length
+    model="llama-3.3-70b-versatile",  # Primary synthesis model
+    temperature=0.3,                   # Adjust creativity (0.0-1.0)
 )
 ```
 
 **Available Groq Models:**
-- `llama-3.1-8b-instant` (Fast, recommended)
-- `llama-3.1-70b-versatile` (More capable)
+- `llama-3.3-70b-versatile` (More capable, used for synthesis)
+- `llama-3.1-8b-instant` (Fast, used for routing & safety checks)
 - `mixtral-8x7b-32768` (Longer context)
 
 ### Modifying Query Routing
@@ -267,6 +301,16 @@ Edit `src/langgraph/nodes/decider.py` to customize:
 - Multi-tool trigger conditions
 - Tool priority rules
 - Query classification logic
+- Fallback keyword-matching rules
+
+### Configuring the Vision Agent
+
+Edit `src/tools/vision/vision_agent.py`:
+
+```python
+# Configure Gemini model
+model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+```
 
 ### Configuring Research Agent
 
@@ -280,27 +324,23 @@ base_url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 params = {
     "query": query,
     "format": "json",
-    "pageSize": 10,  # Number of results
+    "pageSize": 5,  # Number of results
     "cursorMark": "*"
 }
 ```
 
 ### Configuring Web Search
 
-Edit `src/tools/websearch/web_agent.py`:
+Edit `src/tools/websearch/websearch_tool.py`:
 
 ```python
-from tavily import TavilySearch
+from langchain_tavily import TavilySearch
 
 # Initialize Tavily
 tavily = TavilySearch(tavily_api_key=api_key)
 
-# Configure search parameters
-results = tavily.search(
-    query=query,
-    max_results=5,
-    search_depth="advanced"
-)
+# Run search
+raw_result = tavily.run(query)
 ```
 
 ---
@@ -317,11 +357,11 @@ For production, it is recommended to host the **static frontend on Vercel** (for
    ```bash
    vercel --yes
    ```
-   *Note: Vercel automatically deploys only the static files from `web/static/` using the [vercel.json](file:///c:/Users/tb619/Videos/Projects/Ai_medical_chatbot/Ai_medical_chatbot/medical_agent/vercel.json) configuration, bypassing lambda storage limits.*
+   *Note: Vercel automatically deploys only the static files from `web/static/` using the `vercel.json` configuration, bypassing lambda storage limits.*
 
 #### 2. Deploy Backend to Render
 1. Connect your GitHub repository to [Render](https://dashboard.render.com/).
-2. Create a new **Web Service** and connect your repository. Render will use the pre-configured [render.yaml](file:///c:/Users/tb619/Videos/Projects/Ai_medical_chatbot/Ai_medical_chatbot/medical_agent/render.yaml) specification automatically.
+2. Create a new **Web Service** and connect your repository. Render will use the pre-configured `render.yaml` specification automatically.
 3. Configure the required environment variables:
    ```env
    GROQ_API_KEY=your_groq_api_key
@@ -365,11 +405,13 @@ To support stateless deployments on Vercel/Render, the database layer can be mig
 ```bash
 # Required
 GROQ_API_KEY=your_groq_api_key
-HUGGINGFACE_API_KEY=your_huggingface_api_key
 TAVILY_API_KEY=your_tavily_api_key
+GEMINI_API_KEY=your_gemini_api_key
 
 # Optional
-PORT=8000  # Render sets this automatically
+PUBMED_API_KEY=your_pubmed_api_key  # Higher rate limits
+DATABASE_URL=postgresql://...       # Supabase connection string
+PORT=8000                           # Render sets this automatically
 FLASK_ENV=production
 LOG_LEVEL=INFO
 ```
@@ -383,7 +425,9 @@ The app includes a health check endpoint at `/health` for monitoring:
 def health_check():
     return jsonify({
         "status": "healthy",
-        "timestamp": datetime.now().isoformat()
+        "message": "Medical AI API is running",
+        "graph_loaded": graph is not None,
+        "port": PORT
     }), 200
 ```
 
@@ -445,13 +489,13 @@ def process_query(query: str, chat_id: str) -> dict:
 Error: FileNotFoundError: [Errno 2] No such file or directory: 'data/faiss_index/index.faiss'
 
 Solution:
-# Rebuild the index
-python src/tools/rag/embedder.py
+# Build the index
+python src/tools/rag/retriever.py
 ```
 
 **2. API Key Errors**
 ```bash
-Error: Invalid API key for Groq/Tavily/HuggingFace
+Error: Invalid API key for Groq/Tavily/Gemini
 
 Solution:
 - Check `.env` file exists in root directory
@@ -516,6 +560,17 @@ Solution:
 - Check Tavily API usage limits
 ```
 
+**8. Gemini Vision/Embedding Errors**
+```bash
+Error: Gemini API Error: 403 or 429
+
+Solution:
+- Get a free API key from https://aistudio.google.com/
+- Verify GEMINI_API_KEY is set in .env
+- Check API quota limits (free tier has rate limits)
+- The embedder includes automatic retry with exponential backoff
+```
+
 ### Debug Mode
 
 Enable detailed logging:
@@ -539,28 +594,32 @@ LOG_LEVEL=DEBUG
 - [LangGraph Guide](https://langchain-ai.github.io/langgraph/)
 - [FAISS Documentation](https://github.com/facebookresearch/faiss/wiki)
 - [Groq API Docs](https://console.groq.com/docs)
+- [Google Gemini API](https://ai.google.dev/docs)
+- [PubMed E-utilities API](https://www.ncbi.nlm.nih.gov/books/NBK25501/)
 - [Europe PMC API](https://europepmc.org/RestfulWebService)
 - [Tavily Search API](https://docs.tavily.com/)
 
 ### Architecture Overview
 
 ```
-User Query
+User Query / Image Upload
     ↓
-Flask API (/chat)
+Flask API (/chat) — SSE Streaming
     ↓
 LangGraph Orchestrator
     ↓
-Decider Node (Intent Detection)
+Decider Node (LLM Intent Detection + Reference Resolution)
     ↓
-┌──────────┬──────────────┬────────────┐
-│ RAG Tool │ Research Tool│ Web Search │
-│  (FAISS) │ (Europe PMC) │  (Tavily)  │
-└──────────┴──────────────┴────────────┘
+┌──────────┬──────────────┬────────────┬────────────┬────────────┐
+│ RAG Tool │ Research Tool│ PubMed Tool│ Web Search │Vision Agent│
+│  (FAISS) │ (Europe PMC) │   (NCBI)   │  (Tavily)  │  (Gemini)  │
+└──────────┴──────────────┴────────────┴────────────┴────────────┘
     ↓
-Aggregator Node (Response Synthesis)
+Aggregator Node (Response Synthesis — Llama 3.3 70b)
     ↓
-Final Response → User
+Safety Checker Node (Emergency Detection + Disclaimer Audit)
+    ↓
+Final Response → User (SSE Stream)
 ```
 
 ---
@@ -586,8 +645,10 @@ in the Software without restriction...
 - [LangChain](https://www.langchain.com/) for the amazing framework
 - [LangGraph](https://github.com/langchain-ai/langgraph) for multi-agent orchestration
 - [Groq](https://groq.com/) for fast LLM inference
+- [Google Gemini](https://ai.google.dev/) for vision analysis and embeddings
 - [FAISS](https://github.com/facebookresearch/faiss) for efficient vector search
 - [Europe PMC](https://europepmc.org/) for open access to research papers
+- [PubMed / NCBI](https://pubmed.ncbi.nlm.nih.gov/) for medical literature access
 - [Tavily](https://tavily.com/) for powerful web search capabilities
 
 
@@ -623,9 +684,12 @@ The developers and contributors assume no liability for any medical decisions ma
 - [x] Server-Sent Events (SSE) Response Streaming
 - [x] LLM Clinical Safety Evaluation & Guardrails
 - [x] Patient Intake Questionnaire Triage Form
+- [x] Medical Image Analysis (Gemini 2.5 Flash Vision Agent)
+- [x] Gemini Embedding API Integration
+- [x] PostgreSQL (Supabase) Database Support
+- [x] Dual Deployment (Vercel + Render)
 - [ ] Multi-language support
 - [ ] Voice input/output
-- [ ] Medical image analysis
 
 
 ### Version 2.1 (Future)
