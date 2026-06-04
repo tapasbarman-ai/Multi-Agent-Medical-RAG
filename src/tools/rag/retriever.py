@@ -1,7 +1,12 @@
 import sys
 import os
+# Reconfigure stdout to prevent encoding crashes on Windows console
+if sys.platform.startswith('win'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from datasets import load_dataset
 from langchain_community.vectorstores import FAISS
 from tools.rag.embedder import get_embedder
 from config.settings import DATASET_NAME, FAISS_DB_PATH
@@ -10,6 +15,7 @@ from config.settings import DATASET_NAME, FAISS_DB_PATH
 
 def build_faiss_index():
     """Build FAISS index from dataset for disease-symptom retrieval."""
+    from datasets import load_dataset
     print("📥 Loading dataset...")
     ds = load_dataset(DATASET_NAME, split="train")
 

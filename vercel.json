@@ -1,7 +1,20 @@
 {
   "version": 2,
-  "cleanUrls": true,
+  "builds": [
+    {
+      "src": "web/app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "web/static/**",
+      "use": "@vercel/static"
+    }
+  ],
   "routes": [
+    { "src": "/chat", "dest": "web/app.py" },
+    { "src": "/chats", "dest": "web/app.py" },
+    { "src": "/chats/(.*)", "dest": "web/app.py" },
+    { "src": "/health", "dest": "web/app.py" },
     { "src": "/(.*)", "dest": "web/static/$1" }
   ]
 }

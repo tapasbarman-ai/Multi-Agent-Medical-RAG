@@ -45,7 +45,10 @@ CORS(app, resources={
 PORT = int(os.environ.get('PORT', 8000))
 
 # Database path
-DB_PATH = os.path.join(os.path.dirname(__file__), 'chat_history.db')
+if 'VERCEL' in os.environ:
+    DB_PATH = '/tmp/chat_history.db'
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), 'chat_history.db')
 
 # Database Type Detection (PostgreSQL vs SQLite)
 DB_TYPE = 'sqlite'

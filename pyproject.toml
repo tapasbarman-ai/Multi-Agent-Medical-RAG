@@ -12,7 +12,6 @@ dependencies = [
     "faiss-cpu",
     "requests",
     "python-dotenv",
-    "sentence_transformers",
     "flask",
     "flask-cors",
     "gunicorn",
