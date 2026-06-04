@@ -18,6 +18,7 @@ class MyState(TypedDict):
     results: list
     metadata: dict
     final_answer: str
+    history: list
 
 
 def route_after_decider(state):
@@ -56,7 +57,8 @@ def multi_executor(state):
             "tool": tool_name,
             "results": [],
             "metadata": {},
-            "final_answer": ""
+            "final_answer": "",
+            "history": state.get("history", [])
         }
 
         # Execute the appropriate tool
