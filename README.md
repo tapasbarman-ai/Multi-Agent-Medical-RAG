@@ -46,29 +46,27 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 ## 🌟 Features
 
 ### 🎯 Multi-Tool Intelligence
-- **Synthesizer Agent**: "Final Medical Response Synthesizer" that merges results from all agents into a single, authoritative, structured medical response.
-- **RAG Agent**: Retrieves relevant medical information from a local knowledge base using FAISS vector search. Optimized with in-memory caching and smart fallback.
+- **Synthesizer Agent**: "Final Medical Response Synthesizer" (upgraded to Llama 3.3 70b) that merges results from all agents into a single, authoritative, structured medical response.
+- **RAG Agent**: Retrieves relevant medical information from a local knowledge base using FAISS vector search, upgraded with BAAI embeddings and Cross-Encoder re-ranking.
 - **PubMed Research Tool**: Directly queries the NCBI PubMed database for high-quality medical literature and clinical studies.
 - **Web Search Agent**: Fetches latest medical news and updates from the web using Tavily Search.
 - **Multi-Tool Orchestration**: Automatically combines multiple tools for complex queries (e.g., "Research + News").
 
-### 🧠 Smart Query Routing
-- Intelligent intent detection that analyzes user queries.
-- Automatic tool selection based on query patterns.
-- Multi-intent query support (e.g., "diabetes symptoms AND latest research").
-- Personal health query prioritization.
+### 🧠 Smart Query Routing & Context Memory
+- **LLM-Based Router**: Advanced query classifier and reference resolver using Llama-3.1-8b.
+- **Multi-turn Memory**: Conversational context retention across multiple dialogue turns.
+- **Patient Intake Questionnaire**: Gathers patient age, sex, chronic conditions, and allergies to personalize recommendations.
 
 ### 💬 Chat Features
-- **Medical Blue Theme**: Professional, clean, and modern UI with dark mode support.
-- **Tool Badges**: Visual indicators showing which tool was used for the response (e.g., 📚 Knowledge Base, 🔬 Research Papers).
-- **Markdown Support**: Beautifully formatted responses with headers, bullet points, and bold text.
-- **Chat Management**: Persistent history with option to delete individual chats.
-- **Responsive Design**: Mobile-friendly interface with sidebar navigation.
+- **Premium Glassmorphic UI**: High-fidelity dark navy clinical theme with frosted-glass components, hover transitions, and progress timelines.
+- **Real-Time Streaming**: Tokens stream character-by-character using Server-Sent Events (SSE) for low latency.
+- **Structured Citation Cards**: Dynamic visual blocks linking directly to PubMed, Europe PMC, or web source documents.
+- **Tool Badges**: Visual indicators showing which tool was used for the response.
 
-### 🔒 Production Ready
-- **Optimized Performance**: RAG caching and LLM fallback (70b -> 8b) for reliability.
-- **Safety Guardrail**: Ensures every medical response includes a standard disclaimer.
-- **Easy Deployment**: Startup script (`run_app.bat`) and Docker/Render support.
+### 🔒 Clinical Safety & Production
+- **LLM Safety Audit**: final guardrail node validating clinical language, detecting emergency warning signs, and warning high-risk patients.
+- **Optimized Performance**: RAG caching, local Cross-Encoder re-ranking, and dual fallback inference routes.
+- **Easy Deployment**: Startup script (`run_app.bat`) and Render support.
 
 ---
 
@@ -607,10 +605,15 @@ The developers and contributors assume no liability for any medical decisions ma
 
 ## 🗺️ Roadmap
 
-### Version 2.0 (InProgress)
+### Version 2.0 (Completed)
 - [x] Integration with PubMed API
 - [x] Unified Response Synthesizer
-- [x] UI Polish & Themes
+- [x] Premium Glassmorphic UI Overhaul
+- [x] Multi-turn Conversational Memory
+- [x] Two-Stage Cross-Encoder Re-ranking
+- [x] Server-Sent Events (SSE) Response Streaming
+- [x] LLM Clinical Safety Evaluation & Guardrails
+- [x] Patient Intake Questionnaire Triage Form
 - [ ] Multi-language support
 - [ ] Voice input/output
 - [ ] Medical image analysis
