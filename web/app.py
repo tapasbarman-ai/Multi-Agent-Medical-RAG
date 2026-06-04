@@ -5,6 +5,13 @@ Optimized for Render deployment
 from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 import sqlite3
+try:
+    import psycopg2
+    import psycopg2.extras
+    HAS_POSTGRES = True
+except ImportError:
+    HAS_POSTGRES = False
+
 from datetime import datetime
 import os
 import sys
@@ -40,44 +47,110 @@ PORT = int(os.environ.get('PORT', 8000))
 # Database path
 DB_PATH = os.path.join(os.path.dirname(__file__), 'chat_history.db')
 
-def init_db():
-    """Initialize SQLite database"""
-    try:
+# Database Type Detection (PostgreSQL vs SQLite)
+DB_TYPE = 'sqlite'
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    if DATABASE_URL.startswith(('postgresql://', 'postgres://', 'postgres+psycopg2://')):
+        if HAS_POSTGRES:
+            DB_TYPE = 'postgres'
+            print("🛢️ Using PostgreSQL (Supabase) Database")
+        else:
+            print("⚠️ DATABASE_URL is a PostgreSQL URI, but psycopg2 is not installed!")
+            print("🛢️ Falling back to local SQLite database.")
+    else:
+        print("⚠️ DATABASE_URL is set but is not a valid PostgreSQL URI (should start with postgresql:// or postgres://).")
+        print("🛢️ Falling back to local SQLite database.")
+else:
+    print("🛢️ Using local SQLite database (DATABASE_URL not set).")
+
+def get_db_connection():
+    """Get database connection based on DB_TYPE"""
+    if DB_TYPE == 'postgres':
+        try:
+            # DictCursor supports both dictionary and positional lookups (row[0], row['col'])
+            conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.DictCursor)
+            return conn
+        except Exception as e:
+            print(f"❌ Failed to connect to PostgreSQL database: {e}")
+            raise e
+    else:
         conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+def execute_db(cursor, query, params=()):
+    """Execute query with automatic parameter placeholder translation for PostgreSQL"""
+    if DB_TYPE == 'postgres':
+        # Translate '?' placeholder style of SQLite to '%s' of PostgreSQL
+        translated_query = query.replace('?', '%s')
+        cursor.execute(translated_query, params)
+    else:
+        cursor.execute(query, params)
+
+def init_db():
+    """Initialize database schema"""
+    try:
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS chats (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
+        if DB_TYPE == 'postgres':
+            # PostgreSQL Schema
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS chats (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS messages (
+                    id BIGSERIAL PRIMARY KEY,
+                    chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+                    message TEXT NOT NULL,
+                    is_user BOOLEAN NOT NULL,
+                    image_data TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cursor.execute('''
+                CREATE INDEX IF NOT EXISTS idx_messages_chat_id 
+                ON messages(chat_id)
+            ''')
+        else:
+            # SQLite Schema
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS chats (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    chat_id TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    is_user BOOLEAN NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
+                )
+            ''')
+            cursor.execute('''
+                CREATE INDEX IF NOT EXISTS idx_messages_chat_id 
+                ON messages(chat_id)
+            ''')
 
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chat_id TEXT NOT NULL,
-                message TEXT NOT NULL,
-                is_user BOOLEAN NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
-            )
-        ''')
-
-        cursor.execute('''
-            CREATE INDEX IF NOT EXISTS idx_messages_chat_id 
-            ON messages(chat_id)
-        ''')
-
-        # Add image_data column if it doesn't exist
-        try:
-            cursor.execute('ALTER TABLE messages ADD COLUMN image_data TEXT')
-            print("⚙️ Migrated database: added image_data column")
-        except sqlite3.OperationalError:
-            # Column already exists
-            pass
+            # Add image_data column if it doesn't exist
+            try:
+                cursor.execute('ALTER TABLE messages ADD COLUMN image_data TEXT')
+                print("⚙️ Migrated SQLite database: added image_data column")
+            except sqlite3.OperationalError:
+                # Column already exists
+                pass
 
         conn.commit()
         conn.close()
@@ -85,8 +158,8 @@ def init_db():
     except Exception as e:
         print(f"❌ Database init error: {e}")
 
-# Initialize on startup
-print("🔄 Initializing...")
+# Initialize database on startup
+print("🔄 Initializing database...")
 init_db()
 
 print("🔄 Building LangGraph...")
@@ -142,10 +215,9 @@ def chat():
         history = []
         if chat_id:
             try:
-                conn = sqlite3.connect(DB_PATH)
-                conn.row_factory = sqlite3.Row
+                conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute('''
+                execute_db(cursor, '''
                     SELECT message, is_user 
                     FROM messages 
                     WHERE chat_id = ? 
@@ -282,10 +354,14 @@ def chat():
         print(f"❌ Chat error: {e}")
         return jsonify({"error": str(e)}), 500
 
-def format_utc_to_iso(dt_str):
-    """Convert SQLite CURRENT_TIMESTAMP string YYYY-MM-DD HH:MM:SS to YYYY-MM-DDTHH:MM:SSZ"""
-    if not dt_str:
+def format_utc_to_iso(dt):
+    """Convert SQLite CURRENT_TIMESTAMP string or datetime object to ISO-8601 YYYY-MM-DDTHH:MM:SSZ"""
+    if not dt:
         return None
+    if isinstance(dt, datetime):
+        return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+    
+    dt_str = str(dt)
     if 'T' in dt_str:
         return dt_str
     return dt_str.replace(' ', 'T') + 'Z'
@@ -294,11 +370,10 @@ def format_utc_to_iso(dt_str):
 def get_chats():
     """Get all chat sessions"""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('''
+        execute_db(cursor, '''
             SELECT id, title, created_at, updated_at 
             FROM chats 
             ORDER BY updated_at DESC
@@ -325,11 +400,10 @@ def get_chats():
 def get_chat(chat_id):
     """Get specific chat with messages"""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('SELECT * FROM chats WHERE id = ?', (chat_id,))
+        execute_db(cursor, 'SELECT * FROM chats WHERE id = ?', (chat_id,))
         chat_row = cursor.fetchone()
 
         if not chat_row:
@@ -340,7 +414,7 @@ def get_chat(chat_id):
         chat_dict["created_at"] = format_utc_to_iso(chat_dict.get("created_at"))
         chat_dict["updated_at"] = format_utc_to_iso(chat_dict.get("updated_at"))
 
-        cursor.execute('''
+        execute_db(cursor, '''
             SELECT message, is_user, image_data, created_at 
             FROM messages 
             WHERE chat_id = ? 
@@ -375,15 +449,15 @@ def create_chat():
         if not chat_id:
             return jsonify({"error": "chat_id required"}), 400
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('SELECT id FROM chats WHERE id = ?', (chat_id,))
+        execute_db(cursor, 'SELECT id FROM chats WHERE id = ?', (chat_id,))
         if cursor.fetchone():
             conn.close()
             return jsonify({"message": "Chat exists", "chat_id": chat_id})
 
-        cursor.execute('INSERT INTO chats (id, title) VALUES (?, ?)', (chat_id, title))
+        execute_db(cursor, 'INSERT INTO chats (id, title) VALUES (?, ?)', (chat_id, title))
         conn.commit()
         conn.close()
 
@@ -397,11 +471,11 @@ def create_chat():
 def delete_chat(chat_id):
     """Delete chat session"""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('DELETE FROM messages WHERE chat_id = ?', (chat_id,))
-        cursor.execute('DELETE FROM chats WHERE id = ?', (chat_id,))
+        execute_db(cursor, 'DELETE FROM messages WHERE chat_id = ?', (chat_id,))
+        execute_db(cursor, 'DELETE FROM chats WHERE id = ?', (chat_id,))
 
         conn.commit()
         conn.close()
@@ -416,11 +490,11 @@ def delete_chat(chat_id):
 def clear_all_chats():
     """Clear all chat history"""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('DELETE FROM messages')
-        cursor.execute('DELETE FROM chats')
+        execute_db(cursor, 'DELETE FROM messages')
+        execute_db(cursor, 'DELETE FROM chats')
 
         conn.commit()
         conn.close()
@@ -434,20 +508,20 @@ def clear_all_chats():
 def save_message(chat_id, message, is_user, image_data=None):
     """Save message to database"""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('SELECT id FROM chats WHERE id = ?', (chat_id,))
+        execute_db(cursor, 'SELECT id FROM chats WHERE id = ?', (chat_id,))
         if not cursor.fetchone():
             title = message.strip() if message else ""
             if not title:
                 title = "Image Analysis" if image_data else "New Chat"
             else:
                 title = title[:50] + ('...' if len(title) > 50 else '')
-            cursor.execute('INSERT INTO chats (id, title) VALUES (?, ?)', (chat_id, title))
+            execute_db(cursor, 'INSERT INTO chats (id, title) VALUES (?, ?)', (chat_id, title))
 
-        cursor.execute('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', (chat_id,))
-        cursor.execute('INSERT INTO messages (chat_id, message, is_user, image_data) VALUES (?, ?, ?, ?)',
+        execute_db(cursor, 'UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', (chat_id,))
+        execute_db(cursor, 'INSERT INTO messages (chat_id, message, is_user, image_data) VALUES (?, ?, ?, ?)',
                        (chat_id, message, is_user, image_data))
 
         conn.commit()
@@ -458,21 +532,21 @@ def save_message(chat_id, message, is_user, image_data=None):
 def update_chat_title(chat_id, first_message):
     """Update chat title from first message"""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('SELECT COUNT(*) FROM messages WHERE chat_id = ? AND is_user = 1', (chat_id,))
+        execute_db(cursor, 'SELECT COUNT(*) FROM messages WHERE chat_id = ? AND is_user = 1', (chat_id,))
         count = cursor.fetchone()[0]
 
         if count == 1:
             title = first_message.strip() if first_message else ""
             if not title:
-                cursor.execute('SELECT image_data FROM messages WHERE chat_id = ? AND is_user = 1 LIMIT 1', (chat_id,))
+                execute_db(cursor, 'SELECT image_data FROM messages WHERE chat_id = ? AND is_user = 1 LIMIT 1', (chat_id,))
                 img_row = cursor.fetchone()
                 title = "Image Analysis" if img_row and img_row[0] else "New Chat"
             else:
                 title = title[:50] + ('...' if len(title) > 50 else '')
-            cursor.execute('UPDATE chats SET title = ? WHERE id = ?', (title, chat_id))
+            execute_db(cursor, 'UPDATE chats SET title = ? WHERE id = ?', (title, chat_id))
             conn.commit()
 
         conn.close()
