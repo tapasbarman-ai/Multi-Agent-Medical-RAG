@@ -181,7 +181,11 @@
         let currentChatId = null;
         let isTyping = false;
         let selectedImageBase64 = null; // Holds the selected image as Base64 string
-        const API_URL = window.location.origin;
+        // Set backend API URL dynamically. If running locally, connect to localhost.
+        // Otherwise, point to the production backend deployed on Render.
+        const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? window.location.origin
+            : 'https://medical-ai-chatbot.onrender.com'; // Replace with your actual Render backend URL
 
         const WELCOME_HTML = `
             <div class="welcome-screen">
