@@ -15,7 +15,7 @@ An intelligent multi-agent medical chatbot that combines RAG (Retrieval-Augmente
 
 ### 🚀 Live Application
 
-**Try it now:** [https://medical-assistant-1-15wf.onrender.com](https://medical-assistant-1-15wf.onrender.com)
+**Try it now:** [https://medical-assistant-1-15wf.onrender.com](https://multi-agent-medical-rag-2.onrender.com/)
 
 *Note: First request may take 30-60 seconds as the server spins up (free tier)*
 
@@ -239,11 +239,7 @@ medical-ai-chatbot/
 ├── requirements.txt          # Python dependencies
 ├── render.yaml               # Render deployment config
 └── README.md                 # This file
-```
 
-**GitHub Repository:** [https://github.com/Tapas000/Multi-Agent-RAG-Medical-Assistant](https://github.com/Tapas000/Multi-Agent-RAG-Medical-Assistant)
-
----
 
 ## 🔧 Configuration
 
@@ -570,18 +566,7 @@ in the Software without restriction...
 - [Europe PMC](https://europepmc.org/) for open access to research papers
 - [Tavily](https://tavily.com/) for powerful web search capabilities
 
----
 
-## 📧 Contact
-
-For questions, support, or feedback:
-
-- **GitHub Issues**: [Open an issue](https://github.com/Tapas000/Multi-Agent-RAG-Medical-Assistant/issues)
-- **Email**: your.email@example.com
-- **Twitter**: [@yourhandle](https://twitter.com/yourhandle)
-- **LinkedIn**: [Your Profile](https://linkedin.com/in/yourprofile)
-
----
 
 ## ⚠️ Disclaimer
 
