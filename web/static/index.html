@@ -40,6 +40,43 @@
                 <span>New Chat</span>
             </button>
 
+            <!-- Collapsible Patient Profile Form -->
+            <div class="intake-section-panel" style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.01);">
+                <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleIntakeForm()">
+                    <strong style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; text-transform:uppercase; letter-spacing:0.5px;">🩺 Patient Profile (Optional)</strong>
+                    <span id="intakeToggleIcon" style="font-size:10px; transition: transform 0.2s;">▼</span>
+                </div>
+                <div id="intakeFormContainer" style="display:none; flex-direction:column; gap:8px; margin-top:12px;">
+                    <div style="display:flex; gap:8px;">
+                        <div style="flex:1;">
+                            <label style="display:block; font-size:10px; color:var(--text-tertiary); margin-bottom:4px;">Age</label>
+                            <input type="number" id="intakeAge" placeholder="Age" min="0" max="120" style="width:100%; padding:6px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-size:11px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block; font-size:10px; color:var(--text-tertiary); margin-bottom:4px;">Sex</label>
+                            <select id="intakeSex" onchange="checkPregnancyVisibility()" style="width:100%; padding:6px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-size:11px;">
+                                <option value="">Select</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="pregnancyContainer" style="display:none; align-items:center; gap:6px; padding:2px 0;">
+                        <input type="checkbox" id="intakePregnancy" style="cursor:pointer;">
+                        <label style="font-size:11px; color:var(--text-secondary); cursor:pointer;" for="intakePregnancy">Currently Pregnant</label>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:10px; color:var(--text-tertiary); margin-bottom:4px;">Chronic Conditions (e.g. Asthma, Diabetes)</label>
+                        <input type="text" id="intakeConditions" placeholder="Conditions" style="width:100%; padding:6px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-size:11px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:10px; color:var(--text-tertiary); margin-bottom:4px;">Known Drug Allergies</label>
+                        <input type="text" id="intakeAllergies" placeholder="Allergies" style="width:100%; padding:6px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-size:11px;">
+                    </div>
+                </div>
+            </div>
+
             <div class="search-container">
                 <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
@@ -279,29 +316,242 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         query: message,
-                        chat_id: currentChatId
+                        chat_id: currentChatId,
+                        intake_data: getPatientIntakeData()
                     })
                 });
 
-                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+
                 removeTypingIndicator();
 
-                // 3. Show Bot Response with Tool Info
-                addMessage(data.answer || 'Sorry, I encountered an error.', false, data.tool_used);
+                // Create a temporary message container for bot response
+                const chatArea = document.getElementById('chatArea');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message bot-message';
+                
+                // Progress box above the response text
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'progress-container';
+                progressDiv.style.marginBottom = '12px';
+                progressDiv.style.fontSize = '12px';
+                progressDiv.style.color = 'var(--text-tertiary)';
+                progressDiv.style.background = 'rgba(255,255,255,0.02)';
+                progressDiv.style.padding = '8px 12px';
+                progressDiv.style.borderRadius = '8px';
+                progressDiv.style.border = '1px solid var(--border)';
+                progressDiv.style.display = 'none';
 
-                // Update history title if needed
-                updateChatList();
+                const progressList = document.createElement('div');
+                progressList.className = 'progress-steps';
+                progressList.style.display = 'flex';
+                progressList.style.flexDirection = 'column';
+                progressList.style.gap = '4px';
+                
+                progressDiv.innerHTML = `<strong style="display:block;margin-bottom:6px;color:var(--text-secondary);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">⚙️ Coordination Progress:</strong>`;
+                progressDiv.appendChild(progressList);
+
+                // Tool badge container
+                const badgeContainer = document.createElement('div');
+                badgeContainer.className = 'tool-badge-container';
+
+                // Text body container
+                const textDiv = document.createElement('div');
+                textDiv.className = 'markdown-body';
+                textDiv.innerHTML = '<em>Thinking...</em>';
+
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <div class="bot-icon">UI</div>
+                    </div>
+                    <div class="message-content"></div>
+                `;
+                
+                const contentDiv = messageDiv.querySelector('.message-content');
+                contentDiv.appendChild(progressDiv);
+                contentDiv.appendChild(badgeContainer);
+                contentDiv.appendChild(textDiv);
+                
+                chatArea.appendChild(messageDiv);
+                chatArea.scrollTop = chatArea.scrollHeight;
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let accumulatedData = '';
+                let botResponseText = '';
+                let hasBegunText = false;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    accumulatedData += decoder.decode(value, { stream: true });
+                    const lines = accumulatedData.split('\n\n');
+                    
+                    // Save the last partial line back to accumulatedData
+                    accumulatedData = lines.pop();
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        if (line.startsWith('data: ')) {
+                            const jsonStr = line.slice(6);
+                            try {
+                                const data = JSON.parse(jsonStr);
+                                
+                                if (data.type === 'status') {
+                                    progressDiv.style.display = 'block';
+                                    const step = document.createElement('div');
+                                    step.className = 'progress-step';
+                                    step.style.padding = '2px 0';
+                                    step.style.display = 'flex';
+                                    step.style.alignItems = 'center';
+                                    step.style.gap = '6px';
+                                    step.innerHTML = `<span style="color:var(--accent)">●</span> <span>${data.message}</span>`;
+                                    progressList.appendChild(step);
+                                    chatArea.scrollTop = chatArea.scrollHeight;
+                                }
+                                else if (data.type === 'token') {
+                                    if (!hasBegunText) {
+                                        textDiv.innerHTML = '';
+                                        hasBegunText = true;
+                                    }
+                                    botResponseText += data.text;
+                                    textDiv.innerHTML = formatMessage(botResponseText);
+                                    chatArea.scrollTop = chatArea.scrollHeight;
+                                }
+                                else if (data.type === 'complete') {
+                                    // Set final full answer and tool badge
+                                    botResponseText = data.answer;
+                                    textDiv.innerHTML = formatMessage(botResponseText);
+                                    
+                                    if (data.tool_used && data.tool_used !== 'unknown') {
+                                        const toolNames = {
+                                            'rag': '📚 Knowledge Base',
+                                            'research': '🔬 Research Papers',
+                                            'pubmed': '🔬 PubMed Papers',
+                                            'websearch': '🌐 Web Search',
+                                            'multi': '✨ Multi-Source'
+                                        };
+                                        const toolName = toolNames[data.tool_used] || data.tool_used;
+                                        badgeContainer.innerHTML = `<div class="tool-badge" style="display:inline-block;margin-bottom:8px;">${toolName}</div>`;
+                                    }
+                                    
+                                    // Render structured citation cards
+                                    if (data.sources && data.sources.length > 0) {
+                                        const sourcesDiv = document.createElement('div');
+                                        sourcesDiv.className = 'sources-container';
+                                        sourcesDiv.style.marginTop = '16px';
+                                        sourcesDiv.style.paddingTop = '12px';
+                                        sourcesDiv.style.borderTop = '1px solid var(--border)';
+                                        
+                                        let cardsHtml = `<strong style="display:block;margin-bottom:8px;font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">📚 Reference Sources:</strong>`;
+                                        cardsHtml += `<div class="source-cards" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:10px;">`;
+                                        
+                                        data.sources.forEach(src => {
+                                            const typeIcons = {
+                                                'pubmed': '🧬',
+                                                'research': '🔬',
+                                                'web': '🌐'
+                                            };
+                                            const icon = typeIcons[src.type] || '📄';
+                                            cardsHtml += `
+                                                <a href="${src.url}" target="_blank" class="source-card" style="display:block;padding:8px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;text-decoration:none;color:inherit;transition:all 0.2s;">
+                                                    <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px;display:flex;align-items:center;gap:4px;">
+                                                        <span>${icon}</span> <span>${src.type.toUpperCase()}</span>
+                                                    </div>
+                                                    <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);" title="${src.title}">${src.title}</div>
+                                                </a>
+                                            `;
+                                        });
+                                        cardsHtml += `</div>`;
+                                        sourcesDiv.innerHTML = cardsHtml;
+                                        contentDiv.appendChild(sourcesDiv);
+                                        
+                                        // Add hover micro-animations dynamically
+                                        const cards = sourcesDiv.querySelectorAll('.source-card');
+                                        cards.forEach(card => {
+                                            card.onmouseenter = () => {
+                                                card.style.background = 'rgba(255,255,255,0.06)';
+                                                card.style.borderColor = 'var(--accent)';
+                                                card.style.transform = 'translateY(-1px)';
+                                            };
+                                            card.onmouseleave = () => {
+                                                card.style.background = 'rgba(255,255,255,0.02)';
+                                                card.style.borderColor = 'var(--border)';
+                                                card.style.transform = 'translateY(0)';
+                                            };
+                                        });
+                                    }
+                                    
+                                    // Update sidebar chat history
+                                    updateChatList();
+                                }
+                                else if (data.type === 'error') {
+                                    textDiv.innerHTML = `<span style="color:#ef4444;">⚠️ Error: ${data.message}</span>`;
+                                }
+                            } catch (e) {
+                                console.error('Error parsing SSE line:', e, line);
+                            }
+                        }
+                    }
+                }
 
             } catch (error) {
                 console.error('Error:', error);
                 removeTypingIndicator();
-                addMessage('⚠️ Could not connect to server.', false);
+                addMessage('⚠️ Could not connect to server or connection lost.', false);
             } finally {
                 isTyping = false;
                 document.getElementById('sendBtn').disabled = false;
                 input.disabled = false;
                 input.focus();
             }
+        }
+
+        /* Patient Intake Form Helper Functions */
+        function toggleIntakeForm() {
+            const container = document.getElementById('intakeFormContainer');
+            const icon = document.getElementById('intakeToggleIcon');
+            if (container.style.display === 'none') {
+                container.style.display = 'flex';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                container.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function checkPregnancyVisibility() {
+            const sexSelect = document.getElementById('intakeSex');
+            const container = document.getElementById('pregnancyContainer');
+            if (sexSelect.value === 'female') {
+                container.style.display = 'flex';
+            } else {
+                container.style.display = 'none';
+                document.getElementById('intakePregnancy').checked = false;
+            }
+        }
+
+        function getPatientIntakeData() {
+            const age = document.getElementById('intakeAge').value.trim();
+            const sex = document.getElementById('intakeSex').value;
+            const pregnant = document.getElementById('intakePregnancy').checked;
+            const conditions = document.getElementById('intakeConditions').value.trim();
+            const allergies = document.getElementById('intakeAllergies').value.trim();
+
+            if (!age && !sex && !conditions && !allergies) {
+                return null;
+            }
+
+            return {
+                age: age || 'Not specified',
+                sex: sex || 'Not specified',
+                pregnant: sex === 'female' ? pregnant : false,
+                conditions: conditions || 'None reported',
+                allergies: allergies || 'None reported'
+            };
         }
 
         function handleKeyPress(event) {
