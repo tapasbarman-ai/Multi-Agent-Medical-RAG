@@ -8,6 +8,12 @@ import os
 from langchain_groq import ChatGroq
 from src.tools.rag.retriever import retrieve_semantic_results
 
+def push_event(state, event_type, data):
+    """Helper to push events to the Flask SSE queue if present."""
+    q = state.get("metadata", {}).get("event_queue")
+    if q and hasattr(q, "put"):
+        q.put({"type": event_type, **data})
+
 def rag_agent(state: dict):
     """
     LangGraph-compatible node.
@@ -15,6 +21,7 @@ def rag_agent(state: dict):
     """
     query = state.get("query", "")
     print(f"🧠 [RAG Agent] Processing query: {query}")
+    push_event(state, "status", {"message": "🔍 RAG: Searching local disease/symptom database..."})
 
     # Debug: Print incoming state
     print(f"🔍 [RAG Agent] Incoming state keys: {state.keys()}")
@@ -74,6 +81,7 @@ Answer:
         print(f"🔍 [RAG Agent] First result type: {type(return_dict['results'][0])}")
         print(f"🔍 [RAG Agent] First result length: {len(return_dict['results'][0])}")
 
+        push_event(state, "status", {"message": "📚 RAG: Completed search and summarized results."})
         return return_dict
 
     except Exception as e:
