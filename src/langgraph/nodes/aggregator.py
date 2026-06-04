@@ -101,11 +101,11 @@ Tone: Calm, expert, human-readable, non-alarmist.
 Audience: General public with basic health literacy.
 """
 
-def push_event(state, event_type, data):
-    """Helper to push events to the Flask SSE queue if present."""
-    q = state.get("metadata", {}).get("event_queue")
-    if q and hasattr(q, "put"):
-        q.put({"type": event_type, **data})
+    def push_event(state, event_type, data):
+        """Helper to push events to the Flask SSE queue if present."""
+        q = state.get("metadata", {}).get("event_queue")
+        if q and hasattr(q, "put"):
+            q.put({"type": event_type, **data})
 
     try:
         # Try with high-quality model first
