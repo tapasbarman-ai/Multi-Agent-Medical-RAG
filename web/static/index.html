@@ -40,43 +40,6 @@
                 <span>New Chat</span>
             </button>
 
-            <!-- Collapsible Patient Profile Form -->
-            <div class="intake-section-panel" style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.01);">
-                <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleIntakeForm()">
-                    <strong style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; text-transform:uppercase; letter-spacing:0.5px;">🩺 Patient Profile (Optional)</strong>
-                    <span id="intakeToggleIcon" style="font-size:10px; transition: transform 0.2s;">▼</span>
-                </div>
-                <div id="intakeFormContainer" style="display:none; flex-direction:column; gap:8px; margin-top:12px;">
-                    <div style="display:flex; gap:8px;">
-                        <div style="flex:1;">
-                            <label style="display:block; font-size:10px; color:var(--text-tertiary); margin-bottom:4px;">Age</label>
-                            <input type="number" id="intakeAge" placeholder="Age" min="0" max="120" style="width:100%; padding:6px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-size:11px;">
-                        </div>
-                        <div style="flex:1;">
-                            <label style="display:block; font-size:10px; color:var(--text-tertiary); margin-bottom:4px;">Sex</label>
-                            <select id="intakeSex" onchange="checkPregnancyVisibility()" style="width:100%; padding:6px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-size:11px;">
-                                <option value="">Select</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="pregnancyContainer" style="display:none; align-items:center; gap:6px; padding:2px 0;">
-                        <input type="checkbox" id="intakePregnancy" style="cursor:pointer;">
-                        <label style="font-size:11px; color:var(--text-secondary); cursor:pointer;" for="intakePregnancy">Currently Pregnant</label>
-                    </div>
-                    <div>
-                        <label style="display:block; font-size:10px; color:var(--text-tertiary); margin-bottom:4px;">Chronic Conditions (e.g. Asthma, Diabetes)</label>
-                        <input type="text" id="intakeConditions" placeholder="Conditions" style="width:100%; padding:6px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-size:11px;">
-                    </div>
-                    <div>
-                        <label style="display:block; font-size:10px; color:var(--text-tertiary); margin-bottom:4px;">Known Drug Allergies</label>
-                        <input type="text" id="intakeAllergies" placeholder="Allergies" style="width:100%; padding:6px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-size:11px;">
-                    </div>
-                </div>
-            </div>
-
             <div class="search-container">
                 <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
@@ -112,6 +75,13 @@
                     </div>
                 </div>
                 <div class="top-bar-right">
+                    <button class="icon-btn" onclick="toggleProfileModal()" id="profileToggle" title="Patient Profile" style="position: relative;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span id="profileActiveDot" style="display:none; position:absolute; top:2px; right:2px; width:7px; height:7px; border-radius:50%; background:var(--accent); border:1.5px solid var(--bg-secondary);"></span>
+                    </button>
                     <button class="icon-btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -122,37 +92,7 @@
             </div>
 
             <!-- Chat Area -->
-            <div class="chat-area" id="chatArea">
-                <div class="welcome-screen">
-                    <div class="welcome-icon">
-                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.5">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                    </div>
-                    <h1>Medical AI Assistant</h1>
-                    <p>Ask me about symptoms, diseases, treatments, or the latest medical research</p>
-
-                    <div class="suggestion-cards">
-                        <div class="suggestion-card" onclick="askSample('What are the symptoms of diabetes?')">
-                            <div class="suggestion-icon">💊</div>
-                            <div class="suggestion-text">What are the symptoms of diabetes?</div>
-                        </div>
-                        <div class="suggestion-card" onclick="askSample('Latest research on heart disease')">
-                            <div class="suggestion-icon">🔬</div>
-                            <div class="suggestion-text">Latest research on heart disease</div>
-                        </div>
-                        <div class="suggestion-card" onclick="askSample('Cancer treatment options and studies')">
-                            <div class="suggestion-icon">📊</div>
-                            <div class="suggestion-text">Cancer treatment options and studies</div>
-                        </div>
-                        <div class="suggestion-card" onclick="askSample('What causes high blood pressure?')">
-                            <div class="suggestion-icon">❤️</div>
-                            <div class="suggestion-text">What causes high blood pressure?</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="chat-area" id="chatArea"></div>
 
             <!-- Input Area -->
             <div class="input-section">
@@ -184,7 +124,7 @@
                     </button>
                 </div>
                 <div class="input-footer">
-                    <span class="disclaimer-text">⚠️ For informational purposes only. Consult healthcare professionals
+                    <span class="disclaimer-text">For informational purposes only. Consult healthcare professionals
                         for medical advice.</span>
                 </div>
             </div>
@@ -194,11 +134,93 @@
     <!-- Add Marked.js for better formatting -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+    <!-- Patient Profile Modal -->
+    <div id="profileModal" class="modal-overlay" style="display: none;" onclick="if(event.target === this) toggleProfileModal()">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Patient Profile</h3>
+                <button class="modal-close-btn" onclick="toggleProfileModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-subtext">Providing patient details helps customize clinical insights and warnings.</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="intakeAge">Age</label>
+                        <input type="number" id="intakeAge" placeholder="Age" min="0" max="120">
+                    </div>
+                    <div class="form-group">
+                        <label for="intakeSex">Sex</label>
+                        <select id="intakeSex" onchange="checkPregnancyVisibility()">
+                            <option value="">Select</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="pregnancyContainer" style="display:none; align-items:center; gap:8px; margin-bottom:16px;">
+                    <input type="checkbox" id="intakePregnancy" style="cursor:pointer; width:auto; margin:0;">
+                    <label style="cursor:pointer; font-weight:normal; margin:0; font-size:13px; color:var(--text-secondary);" for="intakePregnancy">Currently Pregnant</label>
+                </div>
+                <div class="form-group">
+                    <label for="intakeConditions">Chronic Conditions (e.g. Asthma, Diabetes)</label>
+                    <input type="text" id="intakeConditions" placeholder="Conditions">
+                </div>
+                <div class="form-group">
+                    <label for="intakeAllergies">Known Drug Allergies</label>
+                    <input type="text" id="intakeAllergies" placeholder="Allergies">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-save-btn" onclick="saveProfileAndClose()">Save Profile</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentChatId = null;
         let isTyping = false;
         let selectedImageBase64 = null; // Holds the selected image as Base64 string
         const API_URL = window.location.origin;
+
+        const WELCOME_HTML = `
+            <div class="welcome-screen">
+                <div class="welcome-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                </div>
+                <h1>Medical AI Assistant</h1>
+                <p>Consult local databases, PubMed, EuropePMC, and web resources for evidence-based guidance.</p>
+
+                <div class="suggestion-cards">
+                    <div class="suggestion-card" onclick="askSample('What are the common symptoms of Type 2 diabetes?')">
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">Symptom Evaluation</div>
+                            <div class="suggestion-text">Explore symptoms and clinical presentations.</div>
+                        </div>
+                    </div>
+                    <div class="suggestion-card" onclick="askSample('Find recent clinical trials for Alzheimer\\'s disease treatments.')">
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">Clinical Research</div>
+                            <div class="suggestion-text">Query PubMed and publication archives for evidence.</div>
+                        </div>
+                    </div>
+                    <div class="suggestion-card" onclick="askSample('What are the standard-of-care treatments for chronic hypertension?')">
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">Treatment Guidelines</div>
+                            <div class="suggestion-text">Review established standards and chronic care paths.</div>
+                        </div>
+                    </div>
+                    <div class="suggestion-card" onclick="askSample('Explain what abnormalities are typically looked for in a chest X-ray.')">
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">Diagnostic Vision</div>
+                            <div class="suggestion-text">Attach X-rays, skin scans, or reports for analysis.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
 
         function triggerImageUpload() {
             document.getElementById('imageInput').click();
@@ -236,6 +258,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
+            loadProfile();
             loadChatHistory();
             newChat();
             setupAutoResize();
@@ -267,7 +290,7 @@
 
         function clearChatDisplay() {
             const chatArea = document.getElementById('chatArea');
-            chatArea.innerHTML = '';
+            chatArea.innerHTML = WELCOME_HTML;
         }
 
         function addMessage(text, isUser, toolUsed = null, imageData = null) {
@@ -285,12 +308,12 @@
             let toolBadge = '';
             if (!isUser && toolUsed && toolUsed !== 'unknown') {
                 const toolNames = {
-                    'rag': '📚 Knowledge Base',
-                    'research': '🔬 Research Papers',
-                    'pubmed': '🔬 PubMed Papers',
-                    'websearch': '🌐 Web Search',
-                    'multi': '✨ Multi-Source',
-                    'vision': '👁️ Clinical Vision'
+                    'rag': 'Knowledge Base',
+                    'research': 'Research Papers',
+                    'pubmed': 'PubMed Papers',
+                    'websearch': 'Web Search',
+                    'multi': 'Multi-Source',
+                    'vision': 'Clinical Vision'
                 };
                 const toolName = toolNames[toolUsed] || toolUsed;
                 toolBadge = `<div class="tool-badge">${toolName}</div>`;
@@ -306,7 +329,7 @@
                 <div class="message-avatar">
                     ${isUser ?
                     '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>' :
-                    '<div class="bot-icon">UI</div>'
+                    '<div class="bot-icon">AI</div>'
                 }
                 </div>
                 <div class="message-content">
@@ -334,7 +357,7 @@
             typingDiv.className = 'message bot-message';
             typingDiv.id = 'typingIndicator';
             typingDiv.innerHTML = `
-                <div class="message-avatar"><div class="bot-icon">UI</div></div>
+                <div class="message-avatar"><div class="bot-icon">AI</div></div>
                 <div class="message-content">
                     <div class="typing-indicator"><span></span><span></span><span></span></div>
                 </div>`;
@@ -409,7 +432,7 @@
                 progressList.style.flexDirection = 'column';
                 progressList.style.gap = '4px';
                 
-                progressDiv.innerHTML = `<strong style="display:block;margin-bottom:6px;color:var(--text-secondary);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">⚙️ Coordination Progress:</strong>`;
+                progressDiv.innerHTML = `<strong style="display:block;margin-bottom:6px;color:var(--text-secondary);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Coordination Progress:</strong>`;
                 progressDiv.appendChild(progressList);
 
                 // Tool badge container
@@ -423,7 +446,7 @@
 
                 messageDiv.innerHTML = `
                     <div class="message-avatar">
-                        <div class="bot-icon">UI</div>
+                        <div class="bot-icon">AI</div>
                     </div>
                     <div class="message-content"></div>
                 `;
@@ -487,38 +510,31 @@
                                     
                                     if (data.tool_used && data.tool_used !== 'unknown') {
                                         const toolNames = {
-                                            'rag': '📚 Knowledge Base',
-                                            'research': '🔬 Research Papers',
-                                            'pubmed': '🔬 PubMed Papers',
-                                            'websearch': '🌐 Web Search',
-                                            'multi': '✨ Multi-Source'
+                                            'rag': 'Knowledge Base',
+                                            'research': 'Research Papers',
+                                            'pubmed': 'PubMed Papers',
+                                            'websearch': 'Web Search',
+                                            'multi': 'Multi-Source'
                                         };
                                         const toolName = toolNames[data.tool_used] || data.tool_used;
                                         badgeContainer.innerHTML = `<div class="tool-badge" style="display:inline-block;margin-bottom:8px;">${toolName}</div>`;
                                     }
                                     
-                                    // Render structured citation cards
-                                    if (data.sources && data.sources.length > 0) {
+                                              if (data.sources && data.sources.length > 0) {
                                         const sourcesDiv = document.createElement('div');
                                         sourcesDiv.className = 'sources-container';
                                         sourcesDiv.style.marginTop = '16px';
                                         sourcesDiv.style.paddingTop = '12px';
                                         sourcesDiv.style.borderTop = '1px solid var(--border)';
                                         
-                                        let cardsHtml = `<strong style="display:block;margin-bottom:8px;font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">📚 Reference Sources:</strong>`;
+                                        let cardsHtml = `<strong style="display:block;margin-bottom:8px;font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Reference Sources:</strong>`;
                                         cardsHtml += `<div class="source-cards" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:10px;">`;
                                         
                                         data.sources.forEach(src => {
-                                            const typeIcons = {
-                                                'pubmed': '🧬',
-                                                'research': '🔬',
-                                                'web': '🌐'
-                                            };
-                                            const icon = typeIcons[src.type] || '📄';
                                             cardsHtml += `
                                                 <a href="${src.url}" target="_blank" class="source-card" style="display:block;padding:8px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;text-decoration:none;color:inherit;transition:all 0.2s;">
                                                     <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px;display:flex;align-items:center;gap:4px;">
-                                                        <span>${icon}</span> <span>${src.type.toUpperCase()}</span>
+                                                         <span>${src.type.toUpperCase()}</span>
                                                     </div>
                                                     <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);" title="${src.title}">${src.title}</div>
                                                 </a>
@@ -548,7 +564,7 @@
                                     updateChatList();
                                 }
                                 else if (data.type === 'error') {
-                                    textDiv.innerHTML = `<span style="color:#ef4444;">⚠️ Error: ${data.message}</span>`;
+                                    textDiv.innerHTML = `<span style="color:#ef4444;">Error: ${data.message}</span>`;
                                 }
                             } catch (e) {
                                 console.error('Error parsing SSE line:', e, line);
@@ -560,7 +576,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 removeTypingIndicator();
-                addMessage('⚠️ Could not connect to server or connection lost.', false);
+                addMessage('Could not connect to server or connection lost.', false);
             } finally {
                 isTyping = false;
                 document.getElementById('sendBtn').disabled = false;
@@ -570,15 +586,12 @@
         }
 
         /* Patient Intake Form Helper Functions */
-        function toggleIntakeForm() {
-            const container = document.getElementById('intakeFormContainer');
-            const icon = document.getElementById('intakeToggleIcon');
-            if (container.style.display === 'none') {
-                container.style.display = 'flex';
-                icon.style.transform = 'rotate(180deg)';
+        function toggleProfileModal() {
+            const modal = document.getElementById('profileModal');
+            if (modal.style.display === 'none' || !modal.style.display) {
+                modal.style.display = 'flex';
             } else {
-                container.style.display = 'none';
-                icon.style.transform = 'rotate(0deg)';
+                modal.style.display = 'none';
             }
         }
 
@@ -590,6 +603,48 @@
             } else {
                 container.style.display = 'none';
                 document.getElementById('intakePregnancy').checked = false;
+            }
+        }
+
+        function saveProfileAndClose() {
+            const age = document.getElementById('intakeAge').value.trim();
+            const sex = document.getElementById('intakeSex').value;
+            const pregnant = document.getElementById('intakePregnancy').checked;
+            const conditions = document.getElementById('intakeConditions').value.trim();
+            const allergies = document.getElementById('intakeAllergies').value.trim();
+
+            localStorage.setItem('profile_age', age);
+            localStorage.setItem('profile_sex', sex);
+            localStorage.setItem('profile_pregnant', pregnant);
+            localStorage.setItem('profile_conditions', conditions);
+            localStorage.setItem('profile_allergies', allergies);
+
+            updateProfileActiveDot();
+            toggleProfileModal();
+        }
+
+        function loadProfile() {
+            document.getElementById('intakeAge').value = localStorage.getItem('profile_age') || '';
+            document.getElementById('intakeSex').value = localStorage.getItem('profile_sex') || '';
+            document.getElementById('intakePregnancy').checked = localStorage.getItem('profile_pregnant') === 'true';
+            document.getElementById('intakeConditions').value = localStorage.getItem('profile_conditions') || '';
+            document.getElementById('intakeAllergies').value = localStorage.getItem('profile_allergies') || '';
+            
+            checkPregnancyVisibility();
+            updateProfileActiveDot();
+        }
+
+        function updateProfileActiveDot() {
+            const age = document.getElementById('intakeAge').value.trim();
+            const sex = document.getElementById('intakeSex').value;
+            const conditions = document.getElementById('intakeConditions').value.trim();
+            const allergies = document.getElementById('intakeAllergies').value.trim();
+            const activeDot = document.getElementById('profileActiveDot');
+            
+            if (age || sex || conditions || allergies) {
+                activeDot.style.display = 'block';
+            } else {
+                activeDot.style.display = 'none';
             }
         }
 

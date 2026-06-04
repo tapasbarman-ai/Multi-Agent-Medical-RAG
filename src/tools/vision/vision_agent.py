@@ -21,7 +21,7 @@ def vision_agent(state):
     image_data = state.get("image")
     
     print("🧠 [Vision Agent] Processing medical image...")
-    push_event(state, "status", {"message": "🔬 Clinical Vision: Decoding and analyzing medical image..."})
+    push_event(state, "status", {"message": "Clinical Vision: Decoding and analyzing medical image..."})
     
     # 1. Check for API key
     api_key = os.getenv("GEMINI_API_KEY")
@@ -100,7 +100,7 @@ Tone: Highly objective, calm, expert, and clinical. Do not make definitive, fina
         analysis = response.text
         
         print("✅ [Vision Agent] Completed image analysis")
-        push_event(state, "status", {"message": "👁️ Vision Agent: Image analysis complete."})
+        push_event(state, "status", {"message": "Vision Agent: Image analysis complete."})
         
         return {
             **state,

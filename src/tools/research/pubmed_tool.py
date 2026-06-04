@@ -15,7 +15,7 @@ def pubmed_agent(state: Dict) -> Dict:
     """
     query = state.get("query", "")
     print(f"🔬 [PubMed] Searching for: {query}")
-    push_event(state, "status", {"message": "🔬 PubMed: Querying NCBI databases for medical literature..."})
+    push_event(state, "status", {"message": "PubMed: Querying NCBI databases for medical literature..."})
 
     api_key = os.getenv("PUBMED_API_KEY")
     
@@ -92,7 +92,7 @@ Abstract: {abstract}
             formatted_results.append(result_str)
 
         print(f"✅ [PubMed] Found {len(formatted_results)} papers")
-        push_event(state, "status", {"message": f"🔬 PubMed: Retrieved {len(formatted_results)} research articles."})
+        push_event(state, "status", {"message": f"PubMed: Retrieved {len(formatted_results)} research articles."})
         return {
             **state,
             "results": formatted_results

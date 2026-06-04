@@ -18,7 +18,7 @@ def safety_checker(state: Dict[str, Any]) -> Dict[str, Any]:
     # Standard disclaimer
     disclaimer = """
 ---
-**⚠️ Medical Disclaimer:** This AI assistant is for informational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for diagnosis and treatment.
+**Medical Disclaimer:** This AI assistant is for informational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for diagnosis and treatment.
 """
 
     # If the answer is empty or default, return immediately
@@ -73,9 +73,9 @@ You must respond in JSON format matching this schema:
         # Prepend emergency notice if flagged
         if emergency_warn:
             emergency_notice = """> [!CAUTION]
-> **🚨 EMERGENCY NOTICE:** Your query mentions symptoms (such as chest pain or breathing difficulty) that could indicate a life-threatening medical emergency. **Please call 911 or go to the nearest emergency room immediately.** Do not delay seeking professional emergency care.
+> **EMERGENCY NOTICE:** Your query mentions symptoms (such as chest pain or breathing difficulty) that could indicate a life-threatening medical emergency. **Please call 911 or go to the nearest emergency room immediately.** Do not delay seeking professional emergency care.
 \n"""
-            if "🚨 EMERGENCY NOTICE" not in final_answer:
+            if "EMERGENCY NOTICE" not in final_answer:
                 final_answer = emergency_notice + final_answer
 
         # Append clarification if absolute diagnosis flagged

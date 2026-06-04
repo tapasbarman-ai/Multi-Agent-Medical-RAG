@@ -8,6 +8,10 @@ import sqlite3
 from datetime import datetime
 import os
 import sys
+# Reconfigure stdout to prevent encoding crashes on Windows console
+if sys.platform.startswith('win'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 import queue
 import threading
 import json
@@ -278,6 +282,14 @@ def chat():
         print(f"❌ Chat error: {e}")
         return jsonify({"error": str(e)}), 500
 
+def format_utc_to_iso(dt_str):
+    """Convert SQLite CURRENT_TIMESTAMP string YYYY-MM-DD HH:MM:SS to YYYY-MM-DDTHH:MM:SSZ"""
+    if not dt_str:
+        return None
+    if 'T' in dt_str:
+        return dt_str
+    return dt_str.replace(' ', 'T') + 'Z'
+
 @app.route('/chats', methods=['GET'])
 def get_chats():
     """Get all chat sessions"""
@@ -293,8 +305,15 @@ def get_chats():
             LIMIT 100
         ''')
 
-        chats = [dict(row) for row in cursor.fetchall()]
+        raw_chats = cursor.fetchall()
         conn.close()
+
+        chats = []
+        for row in raw_chats:
+            chat_dict = dict(row)
+            chat_dict["created_at"] = format_utc_to_iso(chat_dict.get("created_at"))
+            chat_dict["updated_at"] = format_utc_to_iso(chat_dict.get("updated_at"))
+            chats.append(chat_dict)
 
         return jsonify({"chats": chats})
 
@@ -311,11 +330,15 @@ def get_chat(chat_id):
         cursor = conn.cursor()
 
         cursor.execute('SELECT * FROM chats WHERE id = ?', (chat_id,))
-        chat = cursor.fetchone()
+        chat_row = cursor.fetchone()
 
-        if not chat:
+        if not chat_row:
             conn.close()
             return jsonify({"error": "Chat not found"}), 404
+
+        chat_dict = dict(chat_row)
+        chat_dict["created_at"] = format_utc_to_iso(chat_dict.get("created_at"))
+        chat_dict["updated_at"] = format_utc_to_iso(chat_dict.get("updated_at"))
 
         cursor.execute('''
             SELECT message, is_user, image_data, created_at 
@@ -324,11 +347,16 @@ def get_chat(chat_id):
             ORDER BY created_at ASC
         ''', (chat_id,))
 
-        messages = [dict(row) for row in cursor.fetchall()]
+        messages = []
+        for row in cursor.fetchall():
+            msg_dict = dict(row)
+            msg_dict["created_at"] = format_utc_to_iso(msg_dict.get("created_at"))
+            messages.append(msg_dict)
+
         conn.close()
 
         return jsonify({
-            "chat": dict(chat),
+            "chat": chat_dict,
             "messages": messages
         })
 
@@ -411,12 +439,16 @@ def save_message(chat_id, message, is_user, image_data=None):
 
         cursor.execute('SELECT id FROM chats WHERE id = ?', (chat_id,))
         if not cursor.fetchone():
-            title = message[:50] + ('...' if len(message) > 50 else '')
+            title = message.strip() if message else ""
+            if not title:
+                title = "Image Analysis" if image_data else "New Chat"
+            else:
+                title = title[:50] + ('...' if len(title) > 50 else '')
             cursor.execute('INSERT INTO chats (id, title) VALUES (?, ?)', (chat_id, title))
 
         cursor.execute('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', (chat_id,))
         cursor.execute('INSERT INTO messages (chat_id, message, is_user, image_data) VALUES (?, ?, ?, ?)',
-                      (chat_id, message, is_user, image_data))
+                       (chat_id, message, is_user, image_data))
 
         conn.commit()
         conn.close()
@@ -433,7 +465,13 @@ def update_chat_title(chat_id, first_message):
         count = cursor.fetchone()[0]
 
         if count == 1:
-            title = first_message[:50] + ('...' if len(first_message) > 50 else '')
+            title = first_message.strip() if first_message else ""
+            if not title:
+                cursor.execute('SELECT image_data FROM messages WHERE chat_id = ? AND is_user = 1 LIMIT 1', (chat_id,))
+                img_row = cursor.fetchone()
+                title = "Image Analysis" if img_row and img_row[0] else "New Chat"
+            else:
+                title = title[:50] + ('...' if len(title) > 50 else '')
             cursor.execute('UPDATE chats SET title = ? WHERE id = ?', (title, chat_id))
             conn.commit()
 

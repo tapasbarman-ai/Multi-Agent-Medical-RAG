@@ -22,7 +22,7 @@ def websearch_tool(state):
     tavily = TavilySearch(tavily_api_key=api_key)
 
     print(f"🔍 WebSearch: Searching for '{query}'")
-    push_event(state, "status", {"message": "🌐 WebSearch: Querying Tavily for latest medical news and updates..."})
+    push_event(state, "status", {"message": "WebSearch: Querying Tavily for latest medical news and updates..."})
 
     try:
         raw_result = tavily.run(query)
@@ -69,7 +69,7 @@ def websearch_tool(state):
 
         if formatted_results:
             print(f"✅ WebSearch: Found {len(formatted_results)} results")
-            push_event(state, "status", {"message": f"🌐 WebSearch: Retrieved {len(formatted_results)} recent news/guideline articles."})
+            push_event(state, "status", {"message": f"WebSearch: Retrieved {len(formatted_results)} recent news/guideline articles."})
             return {
                 **state,
                 "results": formatted_results

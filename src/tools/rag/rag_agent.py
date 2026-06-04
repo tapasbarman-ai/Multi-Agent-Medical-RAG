@@ -21,7 +21,7 @@ def rag_agent(state: dict):
     """
     query = state.get("query", "")
     print(f"🧠 [RAG Agent] Processing query: {query}")
-    push_event(state, "status", {"message": "🔍 RAG: Searching local disease/symptom database..."})
+    push_event(state, "status", {"message": "RAG: Searching local disease/symptom database..."})
 
     # Debug: Print incoming state
     print(f"🔍 [RAG Agent] Incoming state keys: {state.keys()}")
@@ -81,7 +81,7 @@ Answer:
         print(f"🔍 [RAG Agent] First result type: {type(return_dict['results'][0])}")
         print(f"🔍 [RAG Agent] First result length: {len(return_dict['results'][0])}")
 
-        push_event(state, "status", {"message": "📚 RAG: Completed search and summarized results."})
+        push_event(state, "status", {"message": "RAG: Completed search and summarized results."})
         return return_dict
 
     except Exception as e:

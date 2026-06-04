@@ -15,7 +15,7 @@ def research_agent(state: Dict) -> Dict:
     """
     query = state.get("query", "")
     print(f"🔍 Searching EuropePMC for: {query}")
-    push_event(state, "status", {"message": "📚 EuropePMC: Searching publication archives for clinical studies..."})
+    push_event(state, "status", {"message": "EuropePMC: Searching publication archives for clinical studies..."})
 
     # EuropePMC API endpoint
     base_url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
@@ -75,7 +75,7 @@ Abstract: {abstract}
             formatted_results.append(result_str)
 
         print(f"✅ Research: Found {len(formatted_results)} papers")
-        push_event(state, "status", {"message": f"📚 EuropePMC: Found {len(formatted_results)} academic papers."})
+        push_event(state, "status", {"message": f"EuropePMC: Found {len(formatted_results)} academic papers."})
         # CRITICAL: Add debug before returning
         return_dict = {
             **state,
