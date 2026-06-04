@@ -1,5 +1,5 @@
 """
-Vision Agent - Medical Image Analyzer Node using Google Gemini 1.5 Flash
+Vision Agent - Medical Image Analyzer Node using Google Gemini 2.5 Flash
 """
 import os
 import base64
@@ -15,7 +15,7 @@ def push_event(state, event_type, data):
 
 def vision_agent(state):
     """
-    Analyzes medical images (X-rays, skin lesions, reports) using Gemini 1.5 Flash.
+    Analyzes medical images (X-rays, skin lesions, reports) using Gemini 2.5 Flash.
     """
     query = state.get("query", "Analyze this medical image.")
     image_data = state.get("image")
@@ -59,12 +59,12 @@ def vision_agent(state):
             "results": [f"Error decoding image: {e}"]
         }
         
-    # 3. Call Gemini 1.5 Flash
+    # 3. Call Gemini 2.5 Flash
     try:
         genai.configure(api_key=api_key)
         
         # Configure model
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        model = genai.GenerativeModel(model_name="gemini-2.5-flash")
         
         # Inject Patient intake form data if present
         intake_data = state.get("metadata", {}).get("intake_data")
@@ -92,7 +92,7 @@ Task: Analyze the attached medical image (e.g. X-ray, dermatology photo, MRI, la
 Tone: Calm, professional, evidence-based, and advisory.
 """
         
-        print("🤖 [Vision Agent] Querying Gemini 1.5 Flash...")
+        print("🤖 [Vision Agent] Querying Gemini 2.5 Flash...")
         response = model.generate_content([img, prompt])
         analysis = response.text
         
