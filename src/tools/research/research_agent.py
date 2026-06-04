@@ -3,12 +3,19 @@ import requests
 from typing import Dict
 
 
+def push_event(state, event_type, data):
+    """Helper to push events to the Flask SSE queue if present."""
+    q = state.get("metadata", {}).get("event_queue")
+    if q and hasattr(q, "put"):
+        q.put({"type": event_type, **data})
+
 def research_agent(state: Dict) -> Dict:
     """
     Searches EuropePMC for research papers.
     """
     query = state.get("query", "")
     print(f"🔍 Searching EuropePMC for: {query}")
+    push_event(state, "status", {"message": "📚 EuropePMC: Searching publication archives for clinical studies..."})
 
     # EuropePMC API endpoint
     base_url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
@@ -68,7 +75,7 @@ Abstract: {abstract}
             formatted_results.append(result_str)
 
         print(f"✅ Research: Found {len(formatted_results)} papers")
-
+        push_event(state, "status", {"message": f"📚 EuropePMC: Found {len(formatted_results)} academic papers."})
         # CRITICAL: Add debug before returning
         return_dict = {
             **state,
