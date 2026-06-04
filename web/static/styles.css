@@ -636,6 +636,15 @@ body {
     box-shadow: none;
 }
 
+.attach-btn {
+    transition: var(--transition) !important;
+}
+
+.attach-btn:hover {
+    color: var(--accent) !important;
+    transform: scale(1.12);
+}
+
 .input-footer {
     max-width: 850px;
     margin: 12px auto 0;

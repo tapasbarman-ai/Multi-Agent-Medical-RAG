@@ -156,9 +156,24 @@
 
             <!-- Input Area -->
             <div class="input-section">
+                <!-- Image Preview Container -->
+                <div class="image-preview-container" id="imagePreviewContainer" style="display:none; max-width: 850px; margin: 0 auto 12px; position: relative;">
+                    <div style="position: relative; display: inline-block; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 6px;">
+                        <img id="imagePreview" src="" style="max-height: 80px; border-radius: 8px; display: block;" />
+                        <button onclick="removeSelectedImage()" style="position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; background: #ef4444; color: white; border: none; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: var(--shadow-sm); transition: var(--transition);">✕</button>
+                    </div>
+                </div>
+
                 <div class="input-wrapper">
-                    <!-- Removed attachment button -->
-                    <textarea class="message-input" id="messageInput" placeholder="Send a message..." rows="1"
+                    <!-- Image Attachment Button -->
+                    <button class="attach-btn" id="attachBtn" onclick="triggerImageUpload()" title="Attach image" style="background:none; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; display:flex; align-items:center; transition:var(--transition); margin-right:4px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                        </svg>
+                    </button>
+                    <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageSelection(event)">
+
+                    <textarea class="message-input" id="messageInput" placeholder="Send a message or attach image..." rows="1"
                         onkeydown="handleKeyPress(event)"></textarea>
                     <button class="send-btn" id="sendBtn" onclick="sendMessage()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -182,7 +197,42 @@
     <script>
         let currentChatId = null;
         let isTyping = false;
+        let selectedImageBase64 = null; // Holds the selected image as Base64 string
         const API_URL = window.location.origin;
+
+        function triggerImageUpload() {
+            document.getElementById('imageInput').click();
+        }
+
+        function handleImageSelection(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                selectedImageBase64 = e.target.result;
+                
+                // Show preview
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewImg = document.getElementById('imagePreview');
+                previewImg.src = selectedImageBase64;
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeSelectedImage() {
+            selectedImageBase64 = null;
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            document.getElementById('imagePreview').src = '';
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
@@ -220,7 +270,7 @@
             chatArea.innerHTML = '';
         }
 
-        function addMessage(text, isUser, toolUsed = null) {
+        function addMessage(text, isUser, toolUsed = null, imageData = null) {
             const chatArea = document.getElementById('chatArea');
 
             const welcomeScreen = chatArea.querySelector('.welcome-screen');
@@ -237,12 +287,19 @@
                 const toolNames = {
                     'rag': '📚 Knowledge Base',
                     'research': '🔬 Research Papers',
+                    'pubmed': '🔬 PubMed Papers',
                     'websearch': '🌐 Web Search',
                     'multi': '✨ Multi-Source',
-                    'safety': '🛡️ Safety'
+                    'vision': '👁️ Clinical Vision'
                 };
                 const toolName = toolNames[toolUsed] || toolUsed;
                 toolBadge = `<div class="tool-badge">${toolName}</div>`;
+            }
+
+            // Render image if present
+            let imageHtml = '';
+            if (imageData) {
+                imageHtml = `<img src="${imageData}" style="max-width: 100%; max-height: 250px; border-radius: 10px; margin-bottom: 10px; display: block; border: 1px solid var(--border);" />`;
             }
 
             messageDiv.innerHTML = `
@@ -254,16 +311,13 @@
                 </div>
                 <div class="message-content">
                     ${toolBadge}
+                    ${imageHtml}
                     <div class="markdown-body">${formatMessage(text)}</div>
                 </div>
             `;
 
             chatArea.appendChild(messageDiv);
             chatArea.scrollTop = chatArea.scrollHeight;
-
-            // Only save if it's a new message (not loading history)
-            // But here we are just adding to UI. Saving happens in sendMessage loop or manually.
-            // The logic was slightly mixed before. Let's keep it simple.
         }
 
         function formatMessage(text) {
@@ -297,12 +351,16 @@
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
 
-            if (!message || isTyping) return;
+            if ((!message && !selectedImageBase64) || isTyping) return;
 
             // 1. Show User Message
-            addMessage(message, true);
+            const imageToSend = selectedImageBase64;
+            addMessage(message, true, null, imageToSend);
             input.value = '';
             input.style.height = 'auto';
+            if (imageToSend) {
+                removeSelectedImage();
+            }
 
             isTyping = true;
             document.getElementById('sendBtn').disabled = true;
@@ -317,7 +375,8 @@
                     body: JSON.stringify({
                         query: message,
                         chat_id: currentChatId,
-                        intake_data: getPatientIntakeData()
+                        intake_data: getPatientIntakeData(),
+                        image: imageToSend
                     })
                 });
 
@@ -630,9 +689,7 @@
                 if (data.chat && data.messages) {
                     clearChatDisplay();
                     data.messages.forEach(msg => {
-                        // Tool info isn't stored in basic DB schema currently, so we pass null on reload
-                        // (Future improvement: store tool_used in DB)
-                        addMessage(msg.message, msg.is_user);
+                        addMessage(msg.message, msg.is_user, null, msg.image_data);
                     });
                     updateChatList();
                 }

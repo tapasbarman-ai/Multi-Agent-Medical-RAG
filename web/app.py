@@ -67,6 +67,14 @@ def init_db():
             ON messages(chat_id)
         ''')
 
+        # Add image_data column if it doesn't exist
+        try:
+            cursor.execute('ALTER TABLE messages ADD COLUMN image_data TEXT')
+            print("⚙️ Migrated database: added image_data column")
+        except sqlite3.OperationalError:
+            # Column already exists
+            pass
+
         conn.commit()
         conn.close()
         print("✅ Database initialized")
@@ -116,9 +124,10 @@ def chat():
         data = request.json
         query = data.get('query', '').strip()
         chat_id = data.get('chat_id')
+        image = data.get('image')  # Optional Base64 image data string
 
-        if not query:
-            return jsonify({"error": "Query is required"}), 400
+        if not query and not image:
+            return jsonify({"error": "Query or image is required"}), 400
 
         if not graph:
             return jsonify({"error": "AI model not initialized"}), 500
@@ -165,7 +174,8 @@ def chat():
                 "intake_data": intake_data
             },
             "final_answer": "",
-            "history": history
+            "history": history,
+            "image": image
         }
 
         def run_graph():
@@ -246,7 +256,7 @@ def chat():
 
                     # Save complete exchange to database
                     if chat_id:
-                        save_message(chat_id, query, True)
+                        save_message(chat_id, query, True, image)
                         save_message(chat_id, answer, False)
                         update_chat_title(chat_id, query)
 
@@ -308,7 +318,7 @@ def get_chat(chat_id):
             return jsonify({"error": "Chat not found"}), 404
 
         cursor.execute('''
-            SELECT message, is_user, created_at 
+            SELECT message, is_user, image_data, created_at 
             FROM messages 
             WHERE chat_id = ? 
             ORDER BY created_at ASC
@@ -393,7 +403,7 @@ def clear_all_chats():
         print(f"❌ Clear chats error: {e}")
         return jsonify({"error": str(e)}), 500
 
-def save_message(chat_id, message, is_user):
+def save_message(chat_id, message, is_user, image_data=None):
     """Save message to database"""
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -405,8 +415,8 @@ def save_message(chat_id, message, is_user):
             cursor.execute('INSERT INTO chats (id, title) VALUES (?, ?)', (chat_id, title))
 
         cursor.execute('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', (chat_id,))
-        cursor.execute('INSERT INTO messages (chat_id, message, is_user) VALUES (?, ?, ?)',
-                      (chat_id, message, is_user))
+        cursor.execute('INSERT INTO messages (chat_id, message, is_user, image_data) VALUES (?, ?, ?, ?)',
+                      (chat_id, message, is_user, image_data))
 
         conn.commit()
         conn.close()

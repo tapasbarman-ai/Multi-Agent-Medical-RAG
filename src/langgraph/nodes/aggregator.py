@@ -68,6 +68,21 @@ Output Rules:
 - Do not generate any medical disclaimer or structured sections for simple chit-chat/greetings (only do so if they specifically ask a health question).
 - Keep the response short (1-3 sentences).
 """
+    elif tool == "vision":
+        prompt = f"""Role: You are the Final Medical Response Synthesizer Agent.
+You are refining and formatting a clinical vision analysis for the user query: "{query}"
+
+{intake_context}{history_context}Raw Vision Analysis:
+{combined_context}
+
+Task: Format and present the raw vision analysis into a clean, professional, and easy-to-read medical report.
+Output Rules (STRICT):
+- Present the analysis clearly using professional medical headings.
+- Emphasize warnings or contraindications based on the Patient Profile Context if any are mentioned or relevant (e.g. if the patient reports an allergy to a recommended follow-up diagnostic dye).
+- Keep the tone calm, objective, supportive, and clinical.
+- Do not add any new clinical facts not found in the raw analysis.
+- End with the standard one-line Medical Disclaimer.
+"""
     else:
         # FINAL MEDICAL RESPONSE SYNTHESIZER PROMPT
         prompt = f"""Role: You are the Final Medical Response Synthesizer Agent.

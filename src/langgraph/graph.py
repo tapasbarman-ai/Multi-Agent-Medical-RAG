@@ -10,6 +10,7 @@ from src.tools.rag.rag_agent import rag_agent
 from src.tools.research.research_agent import research_agent
 from src.tools.research.pubmed_tool import pubmed_agent
 from src.tools.websearch.websearch_tool import websearch_tool
+from src.tools.vision.vision_agent import vision_agent
 
 
 class MyState(TypedDict):
@@ -19,6 +20,7 @@ class MyState(TypedDict):
     metadata: dict
     final_answer: str
     history: list
+    image: str  # Base64 encoded image string
 
 
 def route_after_decider(state):
@@ -120,6 +122,7 @@ def build_graph():
     graph.add_node("pubmed", pubmed_agent)
     graph.add_node("websearch", websearch_tool)
     graph.add_node("multi_executor", multi_executor)
+    graph.add_node("vision", vision_agent)
     graph.add_node("aggregator", aggregate_response)
     graph.add_node("safety_checker", safety_checker)
 
@@ -136,7 +139,8 @@ def build_graph():
             "pubmed": "pubmed",
             "websearch": "websearch",
             "multi_executor": "multi_executor",
-            "general": "aggregator"
+            "general": "aggregator",
+            "vision": "vision"
         }
     )
 
@@ -146,6 +150,7 @@ def build_graph():
     graph.add_edge("pubmed", "aggregator")
     graph.add_edge("websearch", "aggregator")
     graph.add_edge("multi_executor", "aggregator")
+    graph.add_edge("vision", "aggregator")
 
     # Aggregator goes to Safety Checker
     graph.add_edge("aggregator", "safety_checker")

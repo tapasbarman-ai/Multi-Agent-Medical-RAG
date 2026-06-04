@@ -20,6 +20,13 @@ def decide_tool(state):
     if "metadata" not in state:
         state["metadata"] = {}
 
+    # Fast route to vision if image is present
+    if state.get("image"):
+        state["tool"] = "vision"
+        print("🎯 [LLM Router] Decision: VISION (image present)")
+        push_event(state, "status", {"message": "🏥 Medical Coordinator: Image detected. Routing to Clinical Vision Analyzer..."})
+        return state
+
     push_event(state, "status", {"message": "🏥 Medical Coordinator: Deciding clinical routing..."})
     print(f"\n🔍 [LLM Router] Analyzing query: '{query}'")
 
@@ -130,6 +137,13 @@ def decide_tool_fallback(state):
     # Initialize metadata if not exists
     if "metadata" not in state:
         state["metadata"] = {}
+
+    # Fast route to vision if image is present
+    if state.get("image"):
+        state["tool"] = "vision"
+        print("🎯 [Fallback Router] Decision: VISION (image present)")
+        push_event(state, "status", {"message": "🏥 Medical Coordinator: Image detected. Routing to Clinical Vision Analyzer..."})
+        return state
 
     print(f"🔍 [Fallback Router] Analyzing: '{original_query}'")
 
