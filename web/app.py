@@ -2,12 +2,15 @@
 Flask Backend for Medical AI Chatbot - Production Ready
 Optimized for Render deployment
 """
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 import sqlite3
 from datetime import datetime
 import os
 import sys
+import queue
+import threading
+import json
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -108,7 +111,7 @@ def health_check():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    """Main chat endpoint"""
+    """Main chat endpoint with SSE token and progress streaming"""
     try:
         data = request.json
         query = data.get('query', '').strip()
@@ -122,32 +125,144 @@ def chat():
 
         print(f"📨 Query: {query[:50]}...")
 
-        # Run through graph
+        # Fetch chat history for memory (last 5 messages)
+        history = []
+        if chat_id:
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT message, is_user 
+                    FROM messages 
+                    WHERE chat_id = ? 
+                    ORDER BY created_at DESC 
+                    LIMIT 5
+                ''', (chat_id,))
+                rows = cursor.fetchall()
+                conn.close()
+                # Reverse to make it chronological (oldest to newest)
+                history = [{"message": row["message"], "is_user": bool(row["is_user"])} for row in reversed(rows)]
+                print(f"🧠 Loaded {len(history)} messages from history")
+            except Exception as db_err:
+                print(f"⚠️ Error loading chat history for memory: {db_err}")
+
+        # Extract patient intake form data
+        intake_data = data.get('intake_data')
+        if intake_data:
+            print(f"🩺 Patient Profile Context: {intake_data}")
+
+        # Create thread-safe queue for events
+        event_queue = queue.Queue()
+
+        # Run through graph in a background thread
         initial_state = {
             "query": query,
             "tool": "",
             "results": [],
-            "metadata": {},
-            "final_answer": ""
+            "metadata": {
+                "event_queue": event_queue,
+                "intake_data": intake_data
+            },
+            "final_answer": "",
+            "history": history
         }
 
-        result = graph.invoke(initial_state)
-        answer = result.get("final_answer", "Sorry, I couldn't generate a response.")
+        def run_graph():
+            try:
+                result_state = graph.invoke(initial_state)
+                event_queue.put({"type": "complete", "result": result_state})
+            except Exception as ex:
+                print(f"❌ Error in graph background thread: {ex}")
+                event_queue.put({"type": "error", "message": str(ex)})
 
-        print(f"✅ Response generated ({len(answer)} chars)")
+        thread = threading.Thread(target=run_graph)
+        thread.start()
 
-        # Save to database
-        if chat_id:
-            save_message(chat_id, query, True)
-            save_message(chat_id, answer, False)
-            update_chat_title(chat_id, query)
+        def event_generator():
+            while True:
+                try:
+                    # Wait up to 30s for the next token or status event
+                    evt = event_queue.get(timeout=30.0)
+                except queue.Empty:
+                    # Keep-alive event to prevent browser/proxy timeouts
+                    yield f"data: {json.dumps({'type': 'keep-alive'})}\n\n"
+                    continue
 
-        return jsonify({
-            "answer": answer,
-            "query": query,
-            "tool_used": result.get("tool", "unknown"),
-            "chat_id": chat_id
-        })
+                if evt["type"] == "complete":
+                    res = evt["result"]
+                    answer = res.get("final_answer", "Sorry, I couldn't generate a response.")
+                    tool_used = res.get("tool", "unknown")
+                    raw_results = res.get("results", [])
+
+                    # Extract structured sources/citations from raw results
+                    sources = []
+                    seen_urls = set()
+                    for r in raw_results:
+                        if not isinstance(r, str):
+                            continue
+                        
+                        # If PubMed paper
+                        if "Source: PubMed" in r:
+                            lines = r.split("\n")
+                            title = lines[0].replace("**", "").strip()
+                            link = ""
+                            for line in lines:
+                                if line.strip().startswith("Link:"):
+                                    link = line.replace("Link:", "").strip()
+                            if title and link and link not in seen_urls:
+                                sources.append({"title": title, "url": link, "type": "pubmed"})
+                                seen_urls.add(link)
+                                
+                        # If Europe PMC paper
+                        elif "Authors:" in r and "Journal:" in r:
+                            lines = r.split("\n")
+                            title = lines[0].replace("**", "").strip()
+                            link = ""
+                            for line in lines:
+                                if line.strip().startswith("PMID:"):
+                                    pmid = line.replace("PMID:", "").strip()
+                                    if pmid:
+                                        link = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
+                                elif line.strip().startswith("DOI:") and not link:
+                                    doi = line.replace("DOI:", "").strip()
+                                    if doi:
+                                        link = f"https://doi.org/{doi}"
+                            if title and link not in seen_urls:
+                                sources.append({"title": title, "url": link or "#", "type": "research"})
+                                seen_urls.add(link)
+                                
+                        # If WebSearch
+                        elif "Source: http" in r or "Source:  http" in r:
+                            lines = r.split("\n")
+                            title = lines[0].replace("**", "").strip()
+                            link = ""
+                            for line in lines:
+                                if line.strip().startswith("Source:"):
+                                    link = line.replace("Source:", "").strip()
+                            if title and link and link not in seen_urls:
+                                sources.append({"title": title, "url": link, "type": "web"})
+                                seen_urls.add(link)
+
+                    # Save complete exchange to database
+                    if chat_id:
+                        save_message(chat_id, query, True)
+                        save_message(chat_id, answer, False)
+                        update_chat_title(chat_id, query)
+
+                    # Yield final complete packet with structured sources
+                    yield f"data: {json.dumps({'type': 'complete', 'answer': answer, 'tool_used': tool_used, 'sources': sources})}\n\n"
+                    break
+
+                elif evt["type"] == "error":
+                    yield f"data: {json.dumps({'type': 'error', 'message': evt['message']})}\n\n"
+                    break
+
+                else:
+                    # Forward progress status and tokens to the client
+                    yield f"data: {json.dumps(evt)}\n\n"
+
+        return Response(event_generator(), mimetype='text/event-stream')
 
     except Exception as e:
         print(f"❌ Chat error: {e}")
