@@ -135,7 +135,8 @@ def build_graph():
             "research": "research",
             "pubmed": "pubmed",
             "websearch": "websearch",
-            "multi_executor": "multi_executor"
+            "multi_executor": "multi_executor",
+            "general": "aggregator"
         }
     )
 

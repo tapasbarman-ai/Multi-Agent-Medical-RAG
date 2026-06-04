@@ -17,7 +17,7 @@ def aggregate_response(state):
     print(f"🔄 Aggregator: Synthesizing {len(results)} results from '{tool}'")
 
     # Handle empty results
-    if not results:
+    if tool != "general" and not results:
         return {
             **state,
             "final_answer": "I couldn't find specific medical information for your query. Please consult a healthcare professional for advice."
@@ -54,8 +54,23 @@ def aggregate_response(state):
             f"- Known Allergies: {intake_data.get('allergies')}\n\n"
         )
 
-    # FINAL MEDICAL RESPONSE SYNTHESIZER PROMPT
-    prompt = f"""Role: You are the Final Medical Response Synthesizer Agent.
+    # Determine prompt based on tool choice
+    if tool == "general":
+        prompt = f"""Role: You are a helpful, professional, and friendly Medical AI Chatbot assistant.
+User Query: "{query}"
+
+{history_context}Task: Answer the user's greeting, general chat, or question about your model/identity directly.
+Keep the tone warm, professional, and concise.
+Note: You are a Medical AI Chatbot, running LangGraph with RAG and multiple search tools (PubMed, EuropePMC, Tavily). Your primary models are llama-3.3-70b-versatile for synthesis and llama-3.1-8b-instant for routing.
+Output Rules:
+- Answer the query directly and politely.
+- If they say "hi" or greet you, greet them back and ask how you can help them today with their medical queries.
+- Do not generate any medical disclaimer or structured sections for simple chit-chat/greetings (only do so if they specifically ask a health question).
+- Keep the response short (1-3 sentences).
+"""
+    else:
+        # FINAL MEDICAL RESPONSE SYNTHESIZER PROMPT
+        prompt = f"""Role: You are the Final Medical Response Synthesizer Agent.
 
 Input: You receive raw outputs from multiple agents (research, guidelines, news, analysis) regarding the user's query: "{query}"
 

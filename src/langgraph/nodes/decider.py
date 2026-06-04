@@ -52,17 +52,18 @@ Available Tools:
 - "research": Europe PMC database. Use for academic research topics, search for scientific papers, clinical trials, and general medical literature searches.
 - "pubmed": PubMed (NCBI) database. Use for specialized medical literature, clinical studies, PubMed databases.
 - "websearch": Tavily web search. Use for latest medical news, new guidelines (e.g. 2024/2025/2026), current updates, breakthrough announcements.
+- "general": General conversation, greetings ("hi", "hello", "how are you"), bot identity/metadata questions ("what is your model", "who built you"), or simple off-topic queries that do not require any medical database lookup.
 - "multi": Use when the query combines multiple distinct intents requiring more than one tool (e.g., "Tell me about migraine symptoms AND search for the latest research on them").
 
 Instructions:
-1. Classify the query into a primary "tool" (either "rag", "research", "pubmed", "websearch", or "multi").
+1. Classify the query into a primary "tool" (either "rag", "research", "pubmed", "websearch", "general", or "multi").
 2. Resolve any references, pronouns ("it", "they", "this", "those"), or implicit context in the User Query using the Conversation History to create a standalone, search-friendly query. For example, if history is "Patient: I have migraine" and the query is "What is its treatment?", rewrite it to "migraine treatment".
 3. If "tool" is "multi", list the sub-tools in the "tools" array (subset of ["rag", "research", "pubmed", "websearch"]), and provide standalone "rewritten_queries" for each tool.
 4. If "tool" is not "multi", leave the "tools" array empty, and provide a single rewritten query for that primary tool in "rewritten_queries".
 
 You must output a JSON object matching this schema EXACTLY:
 {{
-  "tool": "rag" | "research" | "pubmed" | "websearch" | "multi",
+  "tool": "rag" | "research" | "pubmed" | "websearch" | "general" | "multi",
   "reasoning": "brief explanation of tool choice",
   "tools": ["tool1", "tool2"],
   "rewritten_queries": {{
@@ -252,6 +253,12 @@ def decide_tool_fallback(state):
 
     if has_news and not has_medical_info:
         state["tool"] = "websearch"
+        return state
+
+    # Greetings / chit-chat/ metadata indicators for general
+    greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "who are you", "what is your name", "model name", "how are you"]
+    if any(g in query for g in greetings) or len(query.strip().split()) <= 2:
+        state["tool"] = "general"
         return state
 
     if has_medical_info:
