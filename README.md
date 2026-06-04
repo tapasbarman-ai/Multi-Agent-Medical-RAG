@@ -307,34 +307,58 @@ results = tavily.search(
 
 ## 🌐 Deployment
 
-### Deploy to Render
+### Recommended: Dual Deployment (Vercel + Render)
 
-1. **Push to GitHub**
+For production, it is recommended to host the **static frontend on Vercel** (for blazing fast speed, global CDN delivery, and automatic HTTPS) and the **backend on Render or Railway** (to host the heavy PyTorch RAG pipelines and LangGraph server without serverless size limits).
+
+#### 1. Deploy Frontend to Vercel
+1. Install Vercel CLI if not already installed, or use Vercel Dashboard.
+2. Link and deploy the project from the root folder:
    ```bash
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
+   vercel --yes
+   ```
+   *Note: Vercel automatically deploys only the static files from `web/static/` using the [vercel.json](file:///c:/Users/tb619/Videos/Projects/Ai_medical_chatbot/Ai_medical_chatbot/medical_agent/vercel.json) configuration, bypassing lambda storage limits.*
+
+#### 2. Deploy Backend to Render
+1. Connect your GitHub repository to [Render](https://dashboard.render.com/).
+2. Create a new **Web Service** and connect your repository. Render will use the pre-configured [render.yaml](file:///c:/Users/tb619/Videos/Projects/Ai_medical_chatbot/Ai_medical_chatbot/medical_agent/render.yaml) specification automatically.
+3. Configure the required environment variables:
+   ```env
+   GROQ_API_KEY=your_groq_api_key
+   TAVILY_API_KEY=your_tavily_api_key
+   GEMINI_API_KEY=your_gemini_api_key
+   DATABASE_URL=postgresql://postgres:[PASSWORD]@[HOST]:6543/postgres  # Supabase URI
    ```
 
-2. **Connect to Render**
-   - Go to [Render Dashboard](https://dashboard.render.com/)
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
+---
 
-3. **Configure Environment Variables**
-   Add in Render dashboard:
-   ```
-   GROQ_API_KEY=your_key
-   HUGGINGFACE_API_KEY=your_key
-   TAVILY_API_KEY=your_key
-   ```
+### Database Deployment (Supabase Setup)
 
-4. **Deploy**
-   - Render will use `render.yaml` automatically
-   - Monitor build logs for any issues
-   - Your app will be live at `https://your-app.onrender.com`
-   
-**Live Example:** This project is deployed at [https://medical-assistant-1-15wf.onrender.com](https://medical-assistant-1-15wf.onrender.com)
+To support stateless deployments on Vercel/Render, the database layer can be migrated to **Supabase (PostgreSQL)**:
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open the **SQL Editor** in the Supabase Dashboard and run the following schema:
+   ```sql
+   CREATE TABLE chats (
+       id TEXT PRIMARY KEY,
+       title TEXT NOT NULL,
+       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+   );
+
+   CREATE TABLE messages (
+       id BIGSERIAL PRIMARY KEY,
+       chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+       message TEXT NOT NULL,
+       is_user BOOLEAN NOT NULL,
+       image_data TEXT,
+       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+   );
+
+   CREATE INDEX idx_messages_chat_id ON messages(chat_id);
+   ```
+3. Copy your database connection string (**Database Settings > Connection Strings > URI**) and set it as `DATABASE_URL` in your backend environment configuration.
+4. **SQLite Fallback:** If `DATABASE_URL` is not set or is invalid, the backend will print a warning and automatically fall back to local SQLite storage.
 
 ### Environment Variables for Production
 
