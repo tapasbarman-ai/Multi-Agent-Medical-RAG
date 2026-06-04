@@ -25,7 +25,7 @@ def aggregate_response(state):
 
     # Initialize LLM
     llm = ChatGroq(
-        model="llama-3.1-70b-versatile",  # Use larger model for better synthesis
+        model="llama-3.3-70b-versatile",  # Use larger model for better synthesis
         api_key=os.getenv("GROQ_API_KEY"),
         temperature=0.3
     )
@@ -33,12 +33,33 @@ def aggregate_response(state):
     # Prepare context
     combined_context = "\n\n".join(str(r) for r in results)
 
+    # Format history context
+    history = state.get("history", [])
+    history_context = ""
+    if history:
+        history_context = "Conversation History:\n" + "\n".join(
+            f"- {'Patient' if h['is_user'] else 'AI Assistant'}: {h['message']}" for h in history
+        ) + "\n\n"
+
+    # Format patient profile context
+    intake_data = state.get("metadata", {}).get("intake_data")
+    intake_context = ""
+    if intake_data:
+        pregnant_str = " (Pregnant)" if intake_data.get("pregnant") else ""
+        intake_context = (
+            f"Patient Profile Context:\n"
+            f"- Age: {intake_data.get('age')}\n"
+            f"- Sex: {intake_data.get('sex')}{pregnant_str}\n"
+            f"- Chronic Conditions: {intake_data.get('conditions')}\n"
+            f"- Known Allergies: {intake_data.get('allergies')}\n\n"
+        )
+
     # FINAL MEDICAL RESPONSE SYNTHESIZER PROMPT
     prompt = f"""Role: You are the Final Medical Response Synthesizer Agent.
 
 Input: You receive raw outputs from multiple agents (research, guidelines, news, analysis) regarding the user's query: "{query}"
 
-Raw Outputs:
+{intake_context}{history_context}Raw Outputs:
 {combined_context}
 
 Task: Merge, deduplicate, and refine all inputs into one coherent, authoritative response suitable for a medical chatbot.
@@ -52,6 +73,7 @@ Output Rules (STRICT):
 - Use neutral, evidence-based language
 - No raw URLs, no agent names, no meta commentary
 - One short medical disclaimer at the end only
+- Adapt treatment guidelines and precautions using the Patient Profile Context (e.g. emphasize warnings if any drug interactions or allergic contraindications exist based on reported allergies and chronic conditions)
 
 Required Structure:
 ### Brief Overview
@@ -79,15 +101,27 @@ Tone: Calm, expert, human-readable, non-alarmist.
 Audience: General public with basic health literacy.
 """
 
+def push_event(state, event_type, data):
+    """Helper to push events to the Flask SSE queue if present."""
+    q = state.get("metadata", {}).get("event_queue")
+    if q and hasattr(q, "put"):
+        q.put({"type": event_type, **data})
+
     try:
         # Try with high-quality model first
-        print("🤖 Aggregator: Attempting synthesis with Llama-3.1-70b...")
-        response = llm.invoke(prompt)
-        final_text = response.content if hasattr(response, 'content') else str(response)
+        print("🤖 Aggregator: Attempting streaming synthesis with Llama-3.3-70b...")
+        push_event(state, "status", {"message": "Synthesizing and formatting final medical response..."})
+        
+        final_text = ""
+        for chunk in llm.stream(prompt):
+            token = chunk.content if hasattr(chunk, 'content') else str(chunk)
+            final_text += token
+            push_event(state, "token", {"text": token})
 
     except Exception as e_main:
         print(f"⚠️ Aggregator 70b Error: {e_main}")
         print("🔄 Switching to fallback model (Llama-3.1-8b-instant)...")
+        push_event(state, "status", {"message": "High-capacity model busy, switching to fallback synthesizer..."})
         
         try:
             # Fallback to faster model
@@ -96,15 +130,16 @@ Audience: General public with basic health literacy.
                 api_key=os.getenv("GROQ_API_KEY"),
                 temperature=0.3
             )
-            response = fallback_llm.invoke(prompt)
-            final_text = response.content if hasattr(response, 'content') else str(response)
+            final_text = ""
+            for chunk in fallback_llm.stream(prompt):
+                token = chunk.content if hasattr(chunk, 'content') else str(chunk)
+                final_text += token
+                push_event(state, "token", {"text": token})
             
         except Exception as e_fallback:
             print(f"❌ Aggregator Fallback Error: {e_fallback}")
-            return {
-                **state,
-                "final_answer": "Error synthesizing response. Here are the raw results:\n\n" + combined_context
-            }
+            final_text = "Error synthesizing response. Here are the raw results:\n\n" + combined_context
+            push_event(state, "token", {"text": final_text})
 
     print(f"✅ Aggregator: Generated synthesized response ({len(final_text)} chars)")
 
