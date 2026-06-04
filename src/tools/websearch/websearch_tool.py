@@ -2,6 +2,12 @@ import os
 from langchain_tavily import TavilySearch
 
 
+def push_event(state, event_type, data):
+    """Helper to push events to the Flask SSE queue if present."""
+    q = state.get("metadata", {}).get("event_queue")
+    if q and hasattr(q, "put"):
+        q.put({"type": event_type, **data})
+
 def websearch_tool(state):
     query = state["query"]
     api_key = os.getenv("TAVILY_API_KEY")
@@ -16,6 +22,7 @@ def websearch_tool(state):
     tavily = TavilySearch(tavily_api_key=api_key)
 
     print(f"🔍 WebSearch: Searching for '{query}'")
+    push_event(state, "status", {"message": "🌐 WebSearch: Querying Tavily for latest medical news and updates..."})
 
     try:
         raw_result = tavily.run(query)
@@ -62,6 +69,7 @@ def websearch_tool(state):
 
         if formatted_results:
             print(f"✅ WebSearch: Found {len(formatted_results)} results")
+            push_event(state, "status", {"message": f"🌐 WebSearch: Retrieved {len(formatted_results)} recent news/guideline articles."})
             return {
                 **state,
                 "results": formatted_results
